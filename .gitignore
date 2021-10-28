@@ -1,0 +1,6 @@
+# Files for macOS
+.DS_Store
+
+# Possible intermediate files (depending on the language)
+*.o
+*.pyc
