@@ -476,8 +476,8 @@ function inverses(a, n) {
 <ul>
 <li>Because we cannot prevent authentication attacks, we at least want to be able to detect these attacks. In particular, we want:
 <ul>
-<li>Message Integrity: We know that the message recieved is the same as the message sent.</li>
-<li>Message Authenticity: We know that it was the person who we think it was who sent the message (not an impersonator).</li>
+<li><strong>Message Integrity:</strong> We know that the message recieved is the same as the message sent.</li>
+<li><strong>Message Authenticity:</strong> We know that it was the person who we think it was who sent the message (not an impersonator).</li>
 <li>*This does not cover replay and side-channel attacks.</li>
 </ul></li>
 <li><strong>Tag:</strong> a hash or the like of the message, appended to the end. These only need to be 100-200 bits.</li>
@@ -504,12 +504,13 @@ function inverses(a, n) {
 <ul>
 <li>Adversarial attacks try to just produce two different inputs that hash to the same value.</li>
 <li>Collision-resistant: any efficient advesary cannot find two different inputs that hash to the same value with mroe than negligible probability. We want these outputs to be pseudo-random, and for the most secure (innefficient) attacks behave like random functions.</li>
+<li>We can find a collision with high probability for a size of roughly one half the space of the hashes. This is because the birthday attack and gives us that all hash functions only have \(2^{\frac{|x|}{2}}\) where <em>|x|</em> is the length of the hash.</li>
 <li>We can probably create an arbitrary length collision resistant function from a fixed length collision resistant function.</li>
-<li><strong>Merkle-Damgaard Construction:</strong></li>
+<li><strong>Merkle-Damgaard Construction:</strong> <span class="confused">is this creation of hash functions for arbitrary length inputs from fixed input hash functions?</span></li>
 <li>Most hash functions do not have private keys (either keys available to the adversary, or no keys).</li>
 <li><strong>HASH and MAC:</strong> This takes a generic collision resistant hash function, which makes this existentially unforgeable under CMA.</li>
-<li><strong>SHA3-MAC:</strong> This just uses the SHA-3 hash of the key concatenated with the message. This is not secure enough for just any Merkle-Damgaard construction.</li>
-<li><strong>HMAC:</strong> A double hash of the message. The first hash is of the message concatenated with rnadom strings and padding, which is then hashed again. This aims to deal with extension attacks.</li>
+<li><strong>SHA3-MAC:</strong> This just uses the SHA-3 hash of the key concatenated with the message. This is not secure enough for just any Merkle-Damgaard construction. <span class="confused">There is a length extending attack? how?</span></li>
+<li><strong>HMAC:</strong> A double hash of the message. The first hash is of the message concatenated with random strings and padding, which is then hashed again. This aims to deal with extension attacks.</li>
 </ul>
 <h2 id="ind-cca">IND-CCA</h2>
 <ul>
@@ -524,9 +525,158 @@ function inverses(a, n) {
 <li>Reflection:</li>
 <li>Solution:
 <ul>
-<li>Timestamps:</li>
+<li>Timestamps: If we send (ts, c, t) where <em>t = H<sub>k</sub>(ts | c)</em>, this is protected against eavesdroppers, integrity attacks, replay, re-ordering, and reflection.</li>
 <li>Session Tokens:</li>
 </ul></li>
+</ul>
+<div class="subelem">
+
+<h2 id="damgård-hash-function-constructions">Damgård hash function constructions</h2>
+<p><a href="https://www.researchgate.net/publication/221354712_A_Design_Principle_for_Hash_Functions">The paper</a></p>
+<ul>
+<li><strong>Collision free:</strong> this just means that it is computationally hard to find a collision, but not that it does not exist (because the pigeon-hole principle requires collisions). Given a function <em>f</em> that can be chosen from some family of functions in polynomial time, it is hard (there is a negligible probability of success) to find <em>f(n) = f(m)</em> where \(n \neq m\).</li>
+<li>This aims to create collision intractible hash functions that are also efficient.</li>
+</ul>
+</div> <!-- End Subelem -->
+
+</div>
+<div class="lecture">
+
+<h2 id="formal-definition-of">Formal definition of</h2>
+<ul>
+<li>Key Generation: returns public key and secret key (2 keys versus 1 for symmetric).</li>
+<li>The encryption algorithm takes random bits.</li>
+<li>Decryption is usually deterministic, but can be probabilistic (which means negligible failure).</li>
+<li>This has to satisfy decryption correctness and security.
+<ul>
+<li>Decyrption Correctness: decryption of a ciphertext will return the encrypted message with probability <em>1 - negligible</em>.</li>
+<li>Security: an adversary cannot obtain even partial information.</li>
+</ul></li>
+<li><strong>One wayness:</strong></li>
+<li><strong>IND/EAV:</strong> and efficient adversary cannot determine which of two messages was encrypted knowing the public key and being able to encrypt ciphertexts (because the key is public).</li>
+<li><strong>IND-CPA:</strong> the public key is public, so the adversary can do the encryption themself (but there is an oracle here). This is no stronger than IND.</li>
+<li><strong>IND-CCA:</strong> this has the oracle (before and after seeing the challenge ciphertext, except not querying the challenge) with access to the secret key so it can decrypt. This is still pretty applicable in real life.</li>
+<li><strong>IND-key-leakage:</strong> an intrusion can reveal part or all of the key.</li>
+<li><strong>IND-key-dependent-plaintext:</strong> the message contains part or all of the key bits. This is harder than IND-CPA, and not really used.</li>
+</ul>
+<h2 id="rsa-again">RSA (again)</h2>
+<ul>
+<li>Texbook RSA is one-waynees secure (but not IND-CPA), but it is inefficient.</li>
+<li>RSA can be broken by IND-CCA by flipping the bit.
+<ul>
+<li>Originally this was solved by adding a zero-knowledge proof, which behaves similar to MAC.</li>
+</ul></li>
+<li>Original RSA is deterministic. There's actually a lot of attacks.</li>
+<li><strong>Padded RSA:</strong> this is insecure against IND-CCA.</li>
+<li><strong>PKCS 1.5:</strong> this is insecure against short message attacks unless the randomness is at least half as large as the message (giving only IND-CPA).</li>
+<li><strong>RSA OAEP:</strong> this is IND-CCA secure (<strong>but not adaptive IND-CCA</strong>). This is used in practice most of the time because it is efficient (ciphertexts are not too much longer than plaintexts, and computationally efficient.</li>
+<li><strong>OAEP+:</strong> by Victor Shoup (of Courant). is adaptive IND-CCA secure. This is not used because the small extra security benefit is not enough to justify the costs</li>
+</ul>
+<h2 id="diffie-hellman">Diffie Hellman</h2>
+<div class="subelem">
+
+<h3 id="cyclic-groups-generators">Cyclic groups, Generators</h3>
+<ul>
+<li><strong>Subgroup:</strong> generated from an element in a larger set</li>
+<li><code>&lt;g&gt;</code> a subgroup of G. The cardinality (order) is <em>g<sup>x</sup> = 1</em> for the smallest <em>x</em>. Since this is cyclic, there are mutliple values that exponentiate to the same output.</li>
+</ul>
+</div> <!-- End Subelem -->
+
+<ul>
+<li><strong>Discrete Logarithm Assumption:</strong> a logarithm (only over integers), over a generator group.</li>
+<li>The best known algorithm to break this (number field sieve) is super-polynomial (but not exponential). With elliptic curves, number field sieve does not work, so there is only exponential time algorithms.</li>
+<li>This is actually a one-way permutation, as the group is cyclic, so we don't actually invert the function to find the answer.</li>
+<li><strong>Decisional Diffie Hellman Assumption:</strong> this is an indistinguishability problem, where an adversary cannot easily distinguish between (g, g<sup>x</sup>, g<sup>y</sup>, g<sup>xy</sup>) and (g, g<sup>x</sup>, g<sup>y</sup>, g<sup>z</sup>).</li>
+<li><strong>ElGamal:</strong> A public key encryption scheme secure against IND-CPA. The ciphertext size is twice the plaintext size (this is good).
+<ul>
+<li><strong>Cramer-Shoup Scheme:</strong> extends El Gamal to be adaptive IND-CCA secure. There is a "lite" version that is non-adaptive IND-CCA secure.</li>
+</ul></li>
+</ul>
+<div class="subelem">
+
+<h2 id="new-directions-in-cryptography-by-whitman-diffie-and-martin-hellman"><em>New Directions in Cryptography</em> By Whitman Diffie and Martin Hellman</h2>
+<p><a href="https://www.cs.jhu.edu/~rubin/courses/sp03/papers/diffie.hellman.pdf">Paper Link</a></p>
+<ul>
+<li>This paper attempts to show a solution for sharing private keys over a public/insecure channel, and using those same keys to create digital signatures. It seems like this isn't about actually building an encryption scheme like RSA.</li>
+<li>This only looks for computationally secret solutions, given the only unconditionally secret solution is the one time pad, which is too expensive.</li>
+<li><span class="comment">This paper is a really good introduction to cryptography.</span></li>
+<li><strong>Identification of Friend or Foe (IFF):</strong> this is a chosen plaintext attack originating from WW2 when planes would get challenges and have to encrypt to prove they were friendly (or a foe could get a chosen plaintext/ciphertext pair).</li>
+<li>They suggest creating a trusted server that authenticates each user when they give their public key. This allows every user trying to communicate with someone to authenticate them by getting the public key from the server.</li>
+<li>DH only works if computing logarithms is hard. This was created because they were looking for a one way function.</li>
+<li><span class="confused">Do they argue that <em>a<sup>x<sub>i</sub></sup></em> is the only thing that needs to be shared, or also <em>a</em> and <em>a<sup>x</sub>j</sub></sup></em>?</span></li>
+<li>Digital signatures should be created by using one way functions that allow for public verification, but it is computationally infeasible to forge a message.</li>
+<li>They argue it is okay for one-way functions to not be permutations, <span class="comment">which is so interesting! They are more focused on it being hard to invert (which make ssense).</span>
+<ul>
+<li>However, when generating cryptosystems from one way functions, they must be one-to-one.</li>
+</ul></li>
+<li><code>Public Key Cryptosystem -&gt; one-way authentication</code> and <code>Public Key Cryptosystem -&gt; Public Key Distribution System</code>, but the inverses are not true.</li>
+<li><code>Public Key Cryptosystem = Trapdoor (one way) functions</code>. <code>Trapdoor cryptosystem -&gt; Public Key Distribution System</code></li>
+<li><strong>Quasi One Way function:</strong> a trapdoor function where you do not know the trapdoor.</li>
+<li>They argue that using NPC problems as cryptographic solutions could work (provided there is more research).</li>
+</ul>
+</div> <!-- End Subelem -->
+
+<div class="subelem"> <!-- El Gamal -->
+
+<h2 id="elgamal">ElGamal</h2>
+<p><a href="https://link.springer.com/content/pdf/10.1007%2F3-540-39568-7_2.pdf">Link to paper</a></p>
+</div> <!-- End Subelem (El Gamal) -->
+
+</div>
+<div class="lecture">
+
+<h1 id="advanced-public-key-cryptography">Advanced Public Key Cryptography</h1>
+<ul>
+<li>This is how to use the public key constructions to encrypt large messages to make the schemes useful.</li>
+</ul>
+<h2 id="hybrid-encryption">Hybrid Encryption</h2>
+<ul>
+<li>We want performance similar to block ciphers (fast). In practice, we can get a performance speedup by using block ciphers.</li>
+<li><strong>Hybrid Encryption:</strong> use public key encryption to send a private key. We can then use symmetric key cryptography with the private key for arbitrary length communication with incredible performance, including with people we do not know.</li>
+<li>We can get IND-CPA by using a public key scheme satisfying IND-CPA, and a private key scheme satisfying IND. We only need IND because we only use the key once.</li>
+<li>To get IND-CCA, both the public and private schemes need to satisfy IND-CCA.</li>
+<li><strong>Key Encapsulation Method (KEM):</strong> a private key is shared using public key encryption (or other methods).</li>
+</ul>
+<h3 id="random-oracle">Random Oracle</h3>
+<ul>
+<li><strong>Random oracle model:</strong> using a hash function in the construction of the encryption method to make it behave like a random function. The hash function tries to act random in order to be collision resistant.</li>
+<li>There are certain (currently unrealistic) schemes that are secure under the random oracle model (random generator), but insecure when replaced with a hash function. This is secure enough (provided the hash function is not broken).</li>
+<li>KEMs in the random oracle model is more efficient than hybrid encryption. This is because they assume we don't need IND-CPA (there's only a short message).</li>
+<li><strong>DDH KEM:</strong></li>
+<li><strong>RSA KEM:</strong></li>
+</ul>
+<h2 id="homomorphic-and-malleable-encryption">Homomorphic and Malleable Encryption</h2>
+<ul>
+<li><strong>Homophobic Encryption:</strong> <code>damn the gays</code> is the key.</li>
+<li>People are more worried about their data. What if we just computed on encrypted data?</li>
+<li><strong>Homomorphic Encryption:</strong> multiple ciphertexts are combined, with a function that outputs a single plaintext as a result of the ciphertexts. <em>E(pk, m<sub>1</sub>) op E(pk, m<sub>2</sub>) = E(pk, m<sub>1</sub> + m<sub>2</sub>)</em>. We do not have a secret key!</li>
+<li>ElGamal is product-homomorphic and product-malleable.</li>
+<li><strong>Malleable Encryption:</strong> changes one ciphertext into another. The plaintext is a result of applying the function. <em>f(E(pk, m)) = E(pk, f(m))</em>.</li>
+</ul>
+<h4 id="revolutionary-schemes">Revolutionary Schemes</h4>
+<ul>
+<li><strong>Partial Homomorphism:</strong> the scheme can do sum, product, and/or xor homomorphism, but not all 3. This also means that composition of the operation cannot be done in arbitrary orders.</li>
+<li><strong>Goldwasser-Micali:</strong> this is IND-CPA secure (first proved). Based on quadratic residue (Does <em>w</em> exist in <em>w<sup>2</sup> = y mod n</em>? Is \(\sqrt{y}\) an integer? is computationally infeasible). This encrypts a single bit with each residue, so it is very inefficient. This is xor-homomorphic.</li>
+<li><strong>Rabin:</strong> based on hardness of modular square root (which is reducible to factoring). Satisfies one-wayness, but chosen ciphertext attacks leaks the entire secret key.
+<ul>
+<li><strong>Probabilistic Rabin:</strong> satisfies IND-CPA by using the LSB as a hard core predicate.</li>
+<li>\(x^2\ mod\ n\) is a trapdoor function (and permutation if <em>n</em> is chosen correctly).</li>
+</ul></li>
+<li><strong>Paillier:</strong> Uses \(Z_{n^2}^*\), which gives: \(gcd(n, \phi (n)) = 1\), certain discrete logarithms, and \(Z_n \cdot Z_n^*\) is an isomorphism of \(Z_{n^2}^*\). This has hardness based on finding the nth-root of <em>y</em>. With high probability, there is not an nth-root (but this still works). This is the first sum-homomorphic, sum/product-malleable (if you know one value being added/multiplied).
+<ul>
+<li><span class="confused">If we know the value being added/multiplied and we know the result, can't we easily get the value (thereby leaking information)?</span></li>
+<li>This scheme can be used for creating digital elections that allow for anyone to verify the results (sum homomorphism) without leaking information about the voters. The issue is that the trusted authority that counts the votes (a different trusted authority than the one who publishes the public key) might not be able to keep the information from the public key trusted authority.</li>
+</ul></li>
+<li><strong>Full Homomorphism:</strong> the scheme is both sum and product homomorphic, but in <em>an arbitrary composition order</em>.</li>
+<li><strong>Arithmetic Circuts:</strong> a tree where variables are combined by using operations. Any polynomial time algorithm can be represented in arithmetic circuts (this is also true for boolean circuts (<strong>AND</strong>, <strong>XOR</strong>, OR, NOT)). Fully homomorphic schemes can represent their operations using this.</li>
+<li><strong>Gentry:</strong> uses ideal latices, but too inefficient to be used in practice. This satisfies IND-CPA. <a href="https://www.cs.cmu.edu/~odonnell/hits09/gentry-homomorphic-encryption.pdf">Link to paper</a>
+<ol type="1">
+<li>Somewhat homomorphism: uses simple decryption algorithm, masking ciphertexts using noise.</li>
+<li>Bootstrapping: re-encryption in a homomorphic way. This is necessary because this ensures decryption correctness by dealing with the noise to maintain low enough noise.</li>
+</ol></li>
+<li><strong>DGHV:</strong> this is similar to Gentry, but has private key and public key (a transformation of the private key scheme) versions. Addition adds one bit of noise, but multiplication doubles the noise. This satisfies IND-CPA.</li>
+<li><span class="confused">Why do we need decryption correctness (why is small error not okay)? Looking at other privacy methods for ensuring anonymity (randomized response, Laplace distributions), isn't error okay?</span></li>
+<li>IND-CCA cannot be guaranteed because homomorphism and malleability helps break the schemes.</li>
 </ul>
 </div>
 </body>
