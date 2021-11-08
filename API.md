@@ -2,6 +2,23 @@
 
 # API
 
+## Account Creation
+
+Step 1:
+
+|Endpoint|/create|
+|Method  |GET    |
+
+Returns cryptik id temporary session cookie to set passsword
+
+Step 2:
+
+|Endpoint|/setpassword|
+|Method  |POST        |
+|Data    |<ul><li>password</li><li>session cookie</li></ul>|
+
+server hashes password and stores it.
+
 ## Authentication
 
 1. Client asks for challenge (by identifying themself)/gets challenge
