@@ -1,0 +1,74 @@
+:root {
+    /* Color Theme Swatch               *
+     * Called Oranges, color blind safe */
+    --orange1: #FFD359;
+    --orange2: #FFAE33;
+    --orange3: #FF8833;
+    --orange4: #F2643D;
+    --orange5: #E62922;
+}
+
+body {
+	margin: 1%;
+	font-size: 110%;
+}
+
+.lecture {
+	margin: 1%;
+	margin-left: 5%;
+	padding: 1%;
+	border-top: var(--orange3) solid 5px;
+	border-left: var(--orange3) solid 3px;
+	border-right: var(--orange3) solid 3px;
+	border-bottom: var(--orange3) solid 4px;
+	border-radius: 5px;
+	max-width: 40em;
+}
+
+.subelem {
+	margin: 1%;
+	padding: 2px;
+	border-top: var(--orange4) solid 2px;
+	border-left: var(--orange4) solid 3px;
+	border-right: var(--orange4) solid 3px;
+	border-bottom: var(--orange4) solid 5px;
+	border-radius: 5px;
+}
+
+/* For wide browsers (tablets/computers?) */
+@media (min-width: 80em) {
+	.lecture {
+		max-width: 45em;
+		margin-left: 25%;
+	}
+	
+	.subelem {
+		max-width: 50em;
+	}
+    .image {
+        max-width: 50%;
+    }
+
+}
+
+/* Phones */
+@media (max-width: 40em) {
+	.lecture {
+		max-width: 100%;
+		margin-left: 0%;
+	}
+	
+	.subelem {
+		max-width: 100%;
+	}
+}
+
+a {
+	text-decoration: none;
+	font-size: 110%;
+}
+
+
+.confused {
+    color: red;
+}

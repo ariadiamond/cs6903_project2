@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+	<title>Applied Cryptography Notes</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script type="text/javascript" src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="text/javascript" src="oldCiphers.js" async></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-chtml.js" async></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/scrypt-js@3.0.1/scrypt.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/aes-js@3.1.2/index.min.js"></script>
+    <script type="text/javascript" src="aes.js" async></script>
+
+	<link rel="favicon" type="image/png" href="favicon.png">
+</head>
+<body>
+<p style="width: wrap-content;float: right;">Copyright Aria Diamond 2021</p>
+
+<h1>Applied Cryptography Notes</h1>
+<hr />
+<!-- Ciphers -->
+
+<div id="oldCipherPlay" class="subelem" style="float: right; width: 20em;">
+
+<p>Choose which cipher to use</p>
+
+<input type="radio" id="caeser" name="oldCipherType" value="caeser" checked>
+<label for="caeser">Caeser</label>
+<br>
+
+<input type="radio" id="rot13" name="oldCipherType" value="rot13">
+<label for="rot13">ROT-13</label>
+<br>
+
+<input type="radio" id="rotate" name="oldCipherType" value="rotate">
+<label for="rotate">Shift an arbitrary amount</label>
+<br>
+<div id="rotateAmtShow" hidden>
+    <label for="rotateAmt">Amount of Characters to Shift</label>
+    <br>
+    <input type="range" id="rotateAmt" name="rotateAmt" min="0" max="26" step="1">
+    </br>
+</div> <!-- End div id=rotateAmtShow -->
+
+<input type="radio" id="rndPerm" name="oldCipherType" value="rndPerm">
+<label for="rndPerm">Random Permutation (only supports a-z)</label>
+<br>
+
+<input type="radio" id="vignere" name="oldCipherType" value="vignere">
+<label for="vignere">Vignere (only supports a-z)</label>
+<br>
+
+<div id="mappingShow" hidden>
+    <svg id="mappingSVG" width="100%" height="10em"></svg>
+</div>
+
+<hr>
+<p>
+<input type="radio" id="encryptOld" name="encryptDecryptOld" value="encryptOld" checked>
+<label for="encryptOld">Encrypt!</label>
+<input type="radio" id="decryptOld" name="encryptDecryptOld" value="decryptOld">
+<label for="decrypt">Decrypt</label>
+<button onClick="swapPlaintext()">Swap Plaintext/Ciphertext</button>
+</p>
+
+<p><label for="plainTextOld">Plain text to encrypt:</label> <br> <input type="textbox" id="plainTextOld" name="plainTextOld"></p>
+<p><label for="cipherTextOld">Resulting cipher text:</label> <br> <input type="textbox" id="cipherTextOld" name="cipherTextOld" readOnly="true"></p>
+</div> 
+
+<!-- Lecture Notes -->
+
+<div class="lecture">
+
+<h2 id="classical-cryptography">Classical Cryptography</h2>
+<div class="subelem">
+
+<h3 id="probability-theory">Probability Theory</h3>
+<ul>
+<li><strong>Simple event:</strong> a single value (event) that can occur once within the sample space of events.</li>
+<li><strong>Complex Event:</strong> a composition of simple events. This is often the complement (\(\neg\)), intersection/conjunction (\(\land\)), or union/disjunction (\(\lor\)) of events.
+<ul>
+<li>\(Pr(\neg E) = 1 - Pr(E)\)</li>
+<li>\(Pr(E \land F) =\) sum of all events in both sample spaces.</li>
+<li>\(Pr(E \lor F) \leq Pr(E) + Pr(F)\)</li>
+<li>Given \(Pr[E_2] \neq 0\), then \(Pr[E_1|E_2] = \frac{Pr[E_1 \cdot E_2]}{Pr[E_2]}\)</li>
+<li>Bayes Theorem: Given, \(Pr[E_2] \neq 0\), then \(Pr[E_1|E_2] = \frac{Pr[E_1] \cdot Pr[E_2|E_1]}{Pr[E_2]}\)</li>
+</ul></li>
+</ul>
+</div> <!-- End Subelem -->
+
+<h3 id="old-ciphers">Old Ciphers</h3>
+<ul>
+<li><strong>Caeser:</strong> rotate each letter 3 forward to encrypt, and 3 back to decrypt. This is a terrible algorithm.</li>
+<li><strong>ROT-13:</strong> rotate each letter 13 forward/back. This is used in online forums to hide spoilers without making the information actually private.</li>
+<li><strong>Shift:</strong> rotate each letter a constant arbitrary amount. This is better than caesar in that there is some randomness, but the key space is small (26).</li>
+<li><strong>Random Permutation (mono-alphabetic substitution):</strong> each letter maps to a random (unique) letter. This has a larger key space (<em>26!</em>), but is vulnerable to frequency analysis.</li>
+<li><strong>Poly-alphabetic Substituion:</strong> the key is a set of a few letters, and each letter of plaintext is encrypted by xoring or shifting by <em>key[plaintextIdx % len(key)]</em></li>
+<li><strong>Vignere:</strong> polyalphabetic-alphabetic substition, but rotate each value <em>i</em>, where <em>i</em> is the index of the plaintext/ciphertext.</li>
+</ul>
+<h3 id="perfect-secrecy">Perfect Secrecy</h3>
+<ul>
+<li><strong>Perfect Secrecy:</strong> Having the ciphertext shares no information about the message encrypted. This means each plaintext is equally likely to be encrypted to the ciphertext.</li>
+</ul>
+<!-- How to break OTP when multiple messages are encrypted with the same key
+- OTP: 
+- c0 = k0 xor m0 if c1 = k0 xor m1
+    c0 xor c1 = (k0 xor m0) xor (k0 xor m1)
+    = (k0 xor k0) xor (m0 xor m1)
+    = (0) xor (m0 xor m1)
+    = m0 xor m1
+    Use frequency analysis from here?
+-->
+
+</div> <!-- End Lecture -->
+<hr />
+<div class="lecture">
+
+<h1 id="modern-cryptographic-primitives-mostly-number-theory">Modern Cryptographic Primitives (Mostly Number Theory)</h1>
+<div class="subelem">
+
+<h2 id="runtime">Runtime</h2>
+<ul>
+<li>Resource usage for an object of size <em>N</em> is usually a function of <em>N</em> (ex: \(log(N)\), \(N^K\), \(2^N\)).</li>
+<li>For runtimes, we normally don't care about best case, but we do care about average case and worst case. Average case is important because that is what happens most of the time.</li>
+<li>This is an explaination of asymptotic runtime bounds.</li>
+</ul>
+<h2 id="complexity-theory">Complexity Theory</h2>
+<ul>
+<li><strong>Turing Machines:</strong> the model of computation we can translate all current algorithms into. This allows us to determine complexity.</li>
+<li>Because optimization problems are much more complex to represent in Turing Machines, and optimization and decision problems are runtime equivalent, decision problems are analyzed in place of the optimization problems.</li>
+<li><strong>Language:</strong> a set of binary strings that satisfy some property. We can then take a string <em>x</em> and check if it's in <em>L</em>.</li>
+<li>Complexity Classes
+<ul>
+<li><strong>Polynomial time algorithms:</strong> problems can be solved with poly time algorithms. This is efficient to solve on modern computers.</li>
+<li><strong>NP:</strong> a potential solution can be verified in polynomial time. This technically includes poly time solution algorithms, as well as algorithms where we do not currently have a poly time solution algorithm (but we do not know if one exists).</li>
+<li><strong>Bounded-Error Probabilistic Polynomial Time (BPP):</strong> (<a href="https://en.wikipedia.org/wiki/BPP_%28complexity%29">wiki</a>). It is hypothesized <em>BPP = P</em>, but there is the possibility that <em>BPP</em> is larger than <em>NP</em>.</li>
+<li><strong>NP Complete:</strong> all NPC problems can reduce to all other NPC problems. These are hard and what separates modern cryptography from classical cryptograhy.</li>
+</ul></li>
+<li>One problem reducing to another does not mean that the other will reduce to the first.</li>
+</ul>
+</div> <!-- End subelem -->
+
+<h2 id="modern-cryptography">Modern Cryptography</h2>
+<ul>
+<li>This is when math/proofs comes in to verify security of ciphers.</li>
+<li>This has certain assumptions that provide a certain guarantee (someone cannot break this with certain resources/time constraints).</li>
+<li>Security Notions:
+<ul>
+<li><strong>Design:</strong> specifying goals/prerequisites to chose certain tradeoffs to benefit use cases.</li>
+<li><strong>Usage:</strong> look at applications of ciphers and choose what works best.</li>
+<li><strong>Study:</strong> new ways to compare ciphers.</li>
+</ul></li>
+</ul>
+<h2 id="public-key-cryptography">Public Key Cryptography</h2>
+<ul>
+<li>Public Key cryptography was thought not possible, and caused the revolution for modern cryptography.</li>
+<li>Requirements for modern crypto systems:
+<ol type="1">
+<li>Efficient encryption and decryption algorithm.</li>
+<li>An inefficient algorithm to break the key. We need functions in <em>NP</em>, and not <em>BPP</em>. This needs to be hard in the average case, not just worst case because attackers deal with average case.</li>
+<li>We do not need perfect secrecy, as it is too inefficient to implement/use in practice.</li>
+<li>We need to be able to share keys so people can communicate with those who they do not know.</li>
+</ol></li>
+<li><strong>Negligible Functions:</strong> functions that go towards 0 very quickly (faster than polynomial) as <em>n</em> increases. These are useful as they will not noticably affect a polynomial time algorithm. Example: \(\frac{1}{n!}, 2^{-n}\).
+<ul>
+<li>Mathmatical definition of negligible: \(\forall c &gt; 0, \exists n_c &gt; 0 | \forall n \geq n_c : f(n) &lt; n^{-c}\)</li>
+</ul></li>
+<li><strong>One Way Functions:</strong> These are easy to apply, but hard to invert. The probability that the attacker can find the interse is negligible. ex: hashes.</li>
+<li><strong>Trapdoor Functions:</strong> a one way function with a trapdoor (a polynomial sized string) that makes inversion easy. The issue with this is that the inverse might not exactly be correct (such as with the squaring function, and taking the square root gives both positive and negative roots); it is non-deterministic.</li>
+<li><strong>Trapdoor Permutation:</strong> a trapdoor function where the function and inverse is one to one (bijective). This might leak parts of the message.</li>
+<li><strong>Hardcore Bits:</strong> given an input string, it returns a single bit output. This can be thought of as a random bit by the adversary.
+<ul>
+<li>The hardcore bit must be easy to compute from the message, but hard given just the trapdoor permutation (ciphertext).</li>
+<li>This can be computed from a trapdoor permutation.</li>
+<li>The <em>probability of a hardcore bit - 1/2</em> should be negligible (it should be computationally indistinguishable from a random bit).</li>
+</ul></li>
+</ul>
+</div> <!-- End Lecture -->
+<hr />
+<!--
+<div class="subelem" style="float: right; width:20em;">
+<p>Greatest Common Divisor</p>
+
+<input type="range" id="aGCD" name="aGCD" value="40" min="1">
+<label for="aGCD" id="laGCD">a</label>
+<br>
+
+<input type="range" id="bGCD" name="bGCD" value="10" min="1">
+<label for="bGCD" id="lbGCD">b</label>
+
+<label for="resultGCD">GCD:</label>
+<input type="textbox" id="resultGCD" name="resultGCD" disabled="true" style="width:2em;">
+
+</div>  End GCD -->
+
+<!-- Lecture Notes -->
+
+<div class="lecture">
+
+<h1 id="building-public-key-cryptography-from-number-theory-primitives">Building Public Key Cryptography from Number Theory Primitives</h1>
+<h2 id="hardness-assumptions-for-cryptographic-primatives">Hardness Assumptions for Cryptographic Primatives</h2>
+<ul>
+<li><strong>One-way functions:</strong> these are hard to invert.</li>
+<li><strong>Trapdoor fucntions:</strong> again hard to invert (unless you have a trapdoor functions).</li>
+<li><strong>Hard Core Predicates:</strong> hard to guess.</li>
+<li>Proving a one way function is in <em>NP</em>/hard means \(P \neq NP\). Thus while we cannot have a proof, we have confidence from evidence that the problem is hard.</li>
+<li>The main hard problems are: Factoring composite integers (RSA) and logarithms modulo primes (Diffie-Hellman and Elliptic curves).</li>
+</ul>
+<h2 id="algorithmic-number-theory">Algorithmic Number Theory</h2>
+<ul>
+<li><strong>Number Theory:</strong> a branch of pure mathmatics concerned with the properties of integers.</li>
+<li><strong>Algorithmic Number theory:</strong> study of algorithms working through number theoretic computations.</li>
+<li>This uses <em>n</em> as the length of the binary representation of an integer.</li>
+<li>Integers: <em>Z</em>, Positive Integers: <em>N</em></li>
+<li><em>a divides b = a|b</em> (\(\frac{b}{a}\)) if \(\exists c \in N: a \cdot c = b\). If \(a \neq 1\ and\ a\neq b\), <em>a</em> is non-trivial.</li>
+<li><strong>Fundamental Theorem of Arithmetic:</strong> every integer larger than 1 can be uniquely expressed as the product of prime powers.</li>
+<li><strong>Relatively Prime/Coprime:</strong> <em>a</em> and <em>b</em> where <em>gcd(a, b)=1</em></li>
+</ul>
+<div class="subelem">
+
+<h1 id="my-notes-in-this-section-are-not-great-and-i-would-not-trust-them-at-the-moment">My notes in this section are not great, and I would not trust them at the moment.</h1>
+<h2 id="euclidean-gcd">Euclidean GCD</h2>
+<pre><code>// a &gt;= b
+function gcd(a, b) {
+    if (b|a) {
+        return b
+    }
+    return gcd(b, a mod b)
+}</code></pre>
+<ul>
+<li>\(b_{i+2} \leq \frac{b_i}{2}\). This means every two recursions, the size of <em>b</em> halves.</li>
+<li>There are no more than <em>2|b|-2</em> recursive calls.</li>
+</ul>
+<h3 id="extended-euclidean-gcd">Extended Euclidean GCD</h3>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm">Wiki psuedocode</a></li>
+<li>There exist unique \(ax+by=gcd(a, b)\) where \(x, y \in Z\).</li>
+<li>This runs in polynomial time with respect to b.</li>
+<li>The extended GCD allows us to get the inverse. Inverse: \(b \cdot c = 1 mod\ n \rightarrow c=b^{-1} mod\ n-1\).</li>
+<li><em>a</em> is invertible <em>mod n</em> if and only if <em>a</em> and <em>n</em> are coprime (gcd is 1).</li>
+</ul>
+<pre><code>// returns (d, x, y) where
+// d = gcd(a, b)
+// xa + yb = d
+function egcd(a, b) {
+    if (b|a) {
+        return (b, 0, 1)
+    }
+    q = a / b
+    r = a - q * b // 0 &lt;= r &lt; b
+    (d, x&#39;, y&#39;) = egcd(b, r) // bx&#39;+ry&#39;=d
+    return (d, y&#39;, x&#39;-y&#39;q)
+}</code></pre>
+<h2 id="inverses">Inverses</h2>
+<pre><code>// given gcd(a, n) == 1
+// (d, x, y) = egcd(a, n)
+// (a * d) mod n = 1
+function inverses(a, n) {
+    (d, x, y) = egcd(a, n)
+    if (d != 1) {
+        return &quot;fail&quot;
+    }
+    return x
+}</code></pre>
+<h2 id="modular-exponentiation">Modular Exponentiation</h2>
+<ul>
+<li>\(a^b\ mod\ n = (a^{\frac{b}{2}})^2\ mod\ n\) if <em>b</em> is even or \(a^b\ mod\ n = a(a^{\frac{b-1}{2}})^2\ mod\ n\) if <em>b</em> is odd. This can be computed recursively for efficient modular exponentiation. This is called square and multiply.</li>
+</ul>
+<pre><code>function SquareAndMultiply(a, b, n) {
+    if (b == 1) {
+        return a
+    }
+    if (b % 2 == 0) { // b is even
+        t = SquareAndMultiply(a, b/2, n)
+        return (t*t) % n
+    } // else
+    t = SquareAndMultiply(a, (b-1)/2, n)
+    return (a*t*t) % n
+}</code></pre>
+</div> <!-- End sketchy section -->
+
+<h2 id="groups">Groups</h2>
+<ul>
+<li><strong>Group:</strong> a set of elements and a binary operation over elements that satisfies certain properties.
+<ul>
+<li><strong>Closure:</strong> \(\forall a, b \in G: f(a, b) \in G\)</li>
+<li><strong>Identity:</strong> \(\exists e \in G: \forall a : f(a, e) = a\). There is only one identity element for each group.</li>
+<li><strong>Inverse:</strong> \(\forall a \in G: \exists b \in G: f(a,b) = e\). There is only one inverse for each element in the group.</li>
+<li><strong>Associativity:</strong> \(\forall a, b, c \in G: f(f(a, b), c) == f(a, f(b, c))\)</li>
+</ul></li>
+<li>To be an abelian group, commutativity (\(\forall a, b \in G: f(a, b) == f(b, a)\)) must also hold.</li>
+<li>Groups are good to work with, so we can restict the set of elements or the operation to create a group.</li>
+<li>For finite groups, there must be a cycle with respect to the operation and output given inputs.</li>
+</ul>
+<h3 id="group-exponentiation">Group Exponentiation</h3>
+<ul>
+<li><strong>Z<sub>N</sub>*:</strong> A group with the set of integers from <em>1</em> to <em>N - 1</em> with the property that all elements are relatively prime to <em>N</em> and the operation of multiplication mod <em>N</em>. This is an abelian group.</li>
+<li><strong>Euler's Totient:</strong> \(\Phi(N) = (p-1)(q-1)\), where <em>p</em> and <em>q</em> are distinct primes. Euler's Totient actually provides the cardinality of the set in the group <em>Z<sub>N</sub>*</em>.</li>
+<li>Using the Chinese Remainder Theorem, we see that that the cross product of <em>Z<sub>p</sub>*</em> and <em>Z<sub>q</sub>*</em> is an isomorphism of <em>Z<sub>N</sub>*</em>. This property is very important because it will allow us to invert the operation we did to encrypt data.</li>
+<li><em>f</em> (the isomorphism from <em>Z<sub>N</sub>*</em> to <em>Z<sub>p</sub>*</em> times <em>Z<sub>q</sub>*</em>) and it's inverse the values for RSA (where <em>e = f</em>, and <em>d = f<sup>-1</sup></em>).</li>
+</ul>
+<h1 id="cryptographic-primitives-from-number-theory">Cryptographic Primitives from Number Theory</h1>
+<ul>
+<li>We can use reductions to have confidence in security algorithms because if the primative secure, then the algorithm is secure (provided the implementation is correct).</li>
+<li>A very <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">useful video</a> to explain the entire process of constructing secure public key cryptography.</li>
+</ul>
+<div class="subelem">
+
+<h1 id="rsa">RSA</h1>
+<p><a href="https://people.csail.mit.edu/rivest/Rsapaper.pdf">The paper</a></p>
+</div> <!-- End Subelem -->
+
+</div> <!-- End Lecture -->
+<hr />
+<div class="lecture">
+
+<h1 id="randomness">Randomness</h1>
+<ul>
+<li>Generating true randomness still usually deals with physical processes (coin tosses, dice, etc).</li>
+<li><strong>Bais:</strong> the odds of getting each output are not equal. In cryptographic applications, small biases can cause attacks.</li>
+<li><strong>Correlation:</strong> a relation between strings, such as a short period.</li>
+<li><strong>Pseudo-randomness:</strong> a deterministic algorithm that takes a truly random string and outputs a longer string that is a transformation of the random string and looks random (even if it is not).</li>
+<li>Non-secure pseudo-random generators. These pass <em>certain</em> (but not all) statistical tests, but fail next-bit predictions.
+<ul>
+<li>LCGs: ex: <em>x<sub>1</sub> = 3 * x<sub>0</sub> + 7</em></li>
+<li>LFSRs: ex: <em>x<sub>1</sub> = ROTL(x<sub>0</sub>, 3) ^ ROTR(x<sub>0</sub>, 7) ^ ROTL(x<sub>0</sub>, 11) ^ ROTR(x<sub>0</sub>, 8)</em></li>
+</ul></li>
+<li>Requirements for modern cryptographic generators. Having one implies the other.
+<ul>
+<li>An adversary in polynomial time cannot show a statistical test that fails.</li>
+<li>An adversary cannot predict the next bits in polynomial time given previous bits.</li>
+</ul></li>
+<li><strong>Computational Indistinguishability:</strong> given random variables <em>X</em> and <em>Y</em>, they are computationally indistinguishable if for any efficient algorithm, the difference of the probabilities for getting a value is negiligible.</li>
+<li><strong>Turing Test:</strong> given two opaque box source: by asking questions, can you determine which source is the human, and which is AI? This is expanded to cryptographic use by giving an adversary an oracle that they are asked to differentiate between a PRNG/PRF/PRP/ciphertext and a random generator/function/permutation/string. A scheme is secure if the probability of the adversary guessing which source a string came from is <em><sup>1</sup>/<sub>2</sub> + a negligible amount</em> in polynomial time.</li>
+</ul>
+<h2 id="psuedo-random-generators">Psuedo-Random Generators</h2>
+<ul>
+<li><strong>Generator:</strong> takes input of size <em>n</em>, and stretches it to a longer string <em>m</em>, where \(m \geq n + 1\). Either of next-bit or statistical tests (having one implies the other) must pass for a generator to be pseudo-random.
+<ul>
+<li><strong>Next-Bit Test:</strong> It must be efficient given <em>m - 1</em> bits, an adversary cannot predict the <em>m</em><sup>th</sup> bit with more than <em>1/2 + negligible probability</em>.</li>
+<li><strong>Statistic test:</strong> The generator must be computationally indistinguishable from a random value.</li>
+</ul></li>
+<li>Generating cryptographically secure pseudo-random generators is strongly related to the hardness of inverting one-way functions. In practice, these number theoretic guarantees are stronger than we need (and not efficient), so we use slightly weaker constructions.</li>
+<li>There exists a pseudorandom generator <em>G</em>, if and only if there is a one way function <em>F</em>. These are the same (<em>G=F</em>).
+<ul>
+<li>If <em>F</em> is not a one-way function, we can predict the next bits of the pseudorandom generator by inverting <em>F</em>.</li>
+<li><em>G(seed) = F(s) ++ HC(s)</em> (<em>++</em> is concatenate), where <em>HC</em> is hard-core predicate. Because <em>HC</em> predicates are hard to determine given <em>F(s)</em> (and easy with <em>s</em>), this is pseudo-random.</li>
+</ul></li>
+<li>With a pseudorandom generator, we can create something similar (but slightly weaker) than OTP with using <em>G(key)</em> to create a string that is <em>messageLen</em> long to xor with the plaintext. The seed can only be used to encrypt one message, otherwise secrecy is lost.</li>
+<li><strong>Computational Secrecy:</strong> a adversary with an efficient algorithm cannot break the scheme (get any information about the plaintext) with more than a negligible probability in a certain amount of time (poly time). This is used in contrast to perfect secrecy (this has caveats of negligible probabality and poly time).</li>
+</ul>
+<h2 id="pseudo-random-functions">Pseudo-Random Functions</h2>
+<ul>
+<li>Random functions create uniform and independent output strings given an input string, but in practice they are too expensive.</li>
+<li><strong>Pseudo-random Functions:</strong> take a short random key and input string, then output a string that looks random to a polynomial time adversary. The key is the only randomness, meaning the key must be random and secret from the adversary. This must be computationally indistinguishable from a random function for the same key if an adversary can see polynomially many outputs, and even choose the inputs for them.</li>
+<li><strong>Oracle:</strong> an opaque box that outputs a value given inputs given by the adversary. The output can be either from the random function or the pseudo-random function, and the adversary has to guess.</li>
+<li>A pseudo-random function is good if the adversary cannot predict whether it is random or pseudo-random given an oracle with more than a negligible advantage.</li>
+<li>Pseudo-random functions seem more powerful than a pseudo-random generator, but it is more expensive, and harder to build. PRFs can also be constructed by PRGs using a binary tree expansion, then choosing the outputs according to the input string.</li>
+<li>Pseudo-random functions exist if and only if a pseudo-random generator exists. This means a pseudo-random function exists if and only if a one-way function exists.</li>
+</ul>
+<h2 id="pseudo-random-permutations">Pseudo-Random Permutations</h2>
+<ul>
+<li>Similar to PR functions, these map a random key and input string to an output string. However, this has the requirement that these are one-to-one (this is important for encryption/decryption correctness).</li>
+<li>A pseudo-random permutation exists if and only if a pseudo-random function exists.</li>
+<li><strong>Feistel transform:</strong> given a pseudo-random function <em>F</em>, an input <em>(L, R)</em> such that the length of <em>L</em> and <em>R</em> are the same, returns <em>(L', R')</em>. All Feistel Transformations are permutations. This is used in DES.
+<ul>
+<li><em>L' = R</em> and <em>R' = L xor F(k, R)</em></li>
+</ul></li>
+<li>The Feistel Transform done 4 times is very strong (even with oracles for <em>O</em> (pseudo-random function and random function) and <em>O'</em> (inverse of pseudo-random function and inverse of random function).</li>
+<li>Rounds of Feistel Transformations:
+<ul>
+<li><strong>Round 1:</strong> \((L, R), F(k, R) \rightarrow (L', R') = (R, L\ xor\ F(k, R))\). The adversary can see if the oracle returns from the Feistel Transform and not random function because <em>L' = R</em>, where <em>R</em> was an input known by the adversary.</li>
+<li><strong>Round 2:</strong> The adversary queries <em>(A, B)</em> and <em>(C, B)</em> and gets <em>(U', V')</em> and <em>(S', T')</em> from the oracle. <em>U' xor A = F(k, B) = S' xor C</em>, which the adversary can check with the oracle for <em>U' xor A = S' xor C</em> (values the adversary knows).</li>
+<li><strong>Round 3:</strong> By now, the outputs are dependent on the inputs of both sides, and is thus pseudorandom (provided <em>F</em> is pseudo-random).</li>
+<li><strong>Round 4:</strong> This is very strong (even with oracles for <em>O</em> (pseudo-random function and random function) and <em>O'</em> (inverse of pseudo-random function and inverse of random function)).</li>
+</ul></li>
+<li><em>Enc(k, m) = (r, F(k, r) xor m)</em>, where <em>r</em> is random. <em>Dec(k, (c1, c2)) = F(k, c1) xor c2</em>. This is better in terms of computational secrecy than the pseudo-random generator construction. The key can be used for multiple messages.</li>
+</ul>
+<h2 id="symmetric-encryption">Symmetric Encryption</h2>
+<ul>
+<li>We want two main properties:
+<ul>
+<li><strong>Correctness:</strong> we should be able to decrypt the ciphertext and get the correct message (given the correct inputs) with a very high probability (<em>1 - negligible</em>, in the case of failure).</li>
+<li><strong>Secrecy:</strong> an adversary cannot get <em>any</em> information about the message from the ciphertext except with negligible probability. The adversary's resources and time constraints need to be noted, as well as what types of attacks they can do (see below).</li>
+</ul></li>
+<li><strong>Message Indistinguishability (IND):</strong> the adversary knows the algorithm. When predicting an oracle, the adversary (with an efficient algorithm) can only be better than <em><sup>1</sup>/<sub>2</sub></em> by a negligible amount. This is also known as EAV (security against eavsdroppers).</li>
+<li><strong>IND-KPA:</strong> known plaintext attacks. The adversary can only see plaintexts/ciphertexts encrypted by the victims, but not influence the plaintext choices.</li>
+<li><strong>IND-CPA:</strong> adversary can perform chosen plaintext attacks. The adversary can influence the plaintexts encrypted. This is the most practical and easiest to run.</li>
+<li><strong>IND-CCA:</strong> adversary can perform chosen ciphertext attacks.</li>
+<li>Strengths: <em>IND &lt; IND-CPA &lt; IND-CCA</em>.</li>
+</ul>
+</div> <!-- End Lecture -->
+<hr />
+<div class="subelem" style="float: right; width: 20em;">
+
+<h4 id="aes">AES</h4>
+<p>Choose a mode of Operation:</p>
+
+<input type="radio" name="AESType" value="AESECB" checked>
+<label for="AESECB">ECB</label>
+<br>
+<input type="radio" name="AESType" value="AESCBC">
+<label for="AESCBC">CBC</label>
+<br>
+<input type="radio" name="AESType" value="AESOFB">
+<label for="AESOFB">OFB</label>
+<br>
+<input type="radio" name="AESType" value="AESCTR">
+<label for="AESCTR">CTR</label>
+<br>
+
+<hr> <!-- Password and Key Derivation -->
+
+<p><label for="passwordAES">Password:</label> <br> <input type="textbox" id="passwordAES"></p>
+<p><label for="keyAES">Derived Key:</label> <br> <input type="textbox" id="keyAES" readOnly="true"></p>
+<hr> <!-- Encrypt actual plaintext -->
+
+<p><label for="plaintextAES">Plaintext to Encrypt</label> <br> <input type="textbox" name="plaintextAES" id="plaintextAES"></p>
+<p><button onclick="aesEncipher()">Encrypt!</button></p>
+
+<p>This encrypts the same first 16 bytes 4 times to show the difference between different encryption modes and how the same block changes when encrypted at different states.</p>
+<p><label for="ciphertext0AES">Encrypted Block 0</label> <input type="textbox" id="ciphertext0AES" name="AESEncBlock" readOnly="true"></p>
+<p><label for="ciphertext1AES">Encrypted Block 1</label> <input type="textbox" id="ciphertext1AES" name="AESEncBlock" readOnly="true"></p>
+<p><label for="ciphertext2AES">Encrypted Block 2</label> <input type="textbox" id="ciphertext2AES" name="AESEncBlock" readOnly="true"></p>
+<p><label for="ciphertext3AES">Encrypted Block 3</label> <input type="textbox" id="ciphertext3AES" name="AESEncBlock" readOnly="true"></p>
+</div>
+
+<div class="lecture">
+
+<h1 id="block-ciphers-and-symmetric-cryptography">Block Ciphers and Symmetric Cryptography</h1>
+<h2 id="ind-cma">IND-CMA</h2>
+<ul>
+<li><strong>Indistinguishability in the presence of chosen message attack (IND-CMA):</strong> The same as chosen plaintext attacks. The adversary is allowed to query the oracle multiple times before and use that knowledge with the challenge. This type of attack can break <strong>any</strong> deterministic encryption scheme. The construction of a symmetric key cipher from PRGs is broken by this, but the PRF construction is secure. This is why we have IVs.</li>
+<li><strong>Simulation:</strong> a cryptography proof concept that replaces secret information (a key) in a way that it is computationally indistinguishable from using the key.</li>
+<li><strong>Adaptive IND-CMA:</strong> an attacker can query the oracle more after seeing the challenge ciphertext. This is decently practical in real life (about as practical as normal IND-CMA). The PRF construction is still secure under this attack.</li>
+</ul>
+<h2 id="block-ciphers">Block Ciphers</h2>
+<ul>
+<li><strong>Block Cipher:</strong> a permutation that takes a key (usually 128-256 bits) and message and outputs a ciphertext in block (usually around key size) increments. The permutation is public, and only the key is private.</li>
+<li>Unlike pseudo-random permutations, we have fixed key lengths. This makes block ciphers more restricted than general symmetric cryptography, and slightly changes their security notions because we cannot have asymptotic notations of algorithms, but because keys are fixed length, there is only so many options. This causes us to use 2 to a large power (currently <em>2<sup>100</sup></em>) as a good metric for security.</li>
+<li>Block ciphers are (<em>t</em>, <em>ε</em>)-secure if for an algorithm that runs in <em>t</em> time, the adversary can only distinguish from a random string with less than <em>ε</em> probability.</li>
+<li><strong>Substitution/Permutation Networks:</strong> (AES) the code representation is pretty small, but the input to output mapping is very large, and should look random.
+<ul>
+<li><strong>Confusion-Diffusion:</strong> the block is separated into much smaller blocks that are each operated on. This allows each of the smaller blocks can be encoded as random strings (S-boxes) (confusion). The output bits are permuted and mixed (diffusion). This is done multiple times (rounds) to truly mix everything.</li>
+<li>Between each round, a sub key derived from the daddy key (via a key scheduler) is xored with intermediate output of a round. <!-- Daddy key and submissive keys. But what about brats? --></li>
+<li>Invertibility of S-boxes: how easy is it to create the inverse</li>
+<li><strong>Avalanche Effect:</strong> the result of an output bit exponentially grows depending on the input bits each round. For example, the first round, the output bit is dependent on one input bit, then the next round, the output bit is based on the two input bits (then four input bits etc).</li>
+</ul></li>
+<li><strong>AES:</strong> a substition permutation network with 128 bit blocks and 128 bit keys with 10 rounds, 192 bit key with 12 rounds, and 256 bit with 14 rounds. There is 16 bytes of state derived from the key.</li>
+<li><strong>Feistel Networks:</strong> (DES) this is equal to substitution networks at low levels (S-boxes, mixing permutations, key scheduling), but different high level structure. This aims to create an invertible function from non-invertible functions.</li>
+<li><strong>DES:</strong> 16-round Feistel network with 64 bit block size and 56 bit key length. Each subkey is 48 bits (with 24 bits from each of the left and right 28 bits of the key). These S-boxes are actually stronger than random values.</li>
+<li><strong>3-DES:</strong> runs DES 3 times, increasing computation time, with only a 1.5 times improvement in security. This is currently enough to be unbreakable, but it is much slower than AES, so not worth it.</li>
+</ul>
+<h2 id="cryptanalysis-of-block-ciphers">Cryptanalysis of Block Ciphers</h2>
+<ul>
+<li><strong>Exhaustive:</strong> try every single key. For DES and AES, this is still the fastest way to break these schemes.</li>
+<li><strong>Meet in the Middle:</strong> This breaks 2DES in marginally longer time than DES. Query the oracle on both sides (<em>F</em> and <em>F<sup>-1</sup></em>) and try to find values that are the same. This can also be used with block ciphers by starting with the plaintext and the ciphertext, and doing half the rounds on the plaintext, and half the rounds on the ciphertext (as done <a href="https://eprint.iacr.org/2010/168.pdf">here</a>).</li>
+<li><strong>Differential:</strong> encrypt multiple plaintexts with either similar plaintexts or similar keys (change just a couple of bits) and see how much the output changes. For a random output, random values should be produced, but bad ciphers will not have changes propagating through the entire output.</li>
+<li><strong>Linear:</strong> this requires only known plaintext/ciphertext pairs (not chosen plaintext), and can recover the key from bias between input and output based on xor similarities.</li>
+</ul>
+<h2 id="modes-of-operation">Modes of Operation</h2>
+<ul>
+<li>This is how to encrypt more than just block sized bits of data. This does this by expanding on the construction of pseudo-random functions.</li>
+<li><strong>Electronic Code Book (ECB):</strong> each block is encrypted with the same key and ciphertexts are contcatenated. This is deterministic, so it does not satifsy IND-CMA. Encrypting the same blocks multiple times produces the same ciphertext (which depdending on the use can be bad).</li>
+<li><strong>Cipher Block Chaining (CBC):</strong> a probabilistic mode (satisfies IND-CMA if the function is pseudo-random). The IV is initially provided, then at each block, the message is xored with the IV, then encrypted. The output block is then used as the IV for the next block. This does not allow for parallelism.</li>
+<li><strong>Output Feedback Mode (OFB):</strong> the IV is put through the encryption algorithm, then this output is used for both the IV of the next block, as well as xored with the message to create the ciphertext. This is a stream cipher, but you do not need the message before you can start building randomness.</li>
+<li><strong>Counter (CTR):</strong> a fully parallelizable stream cipher. This takes an IV, which is put through the encryption algorithm then xored with the message. <em>IV<sub>n</sub> = IV<sub>0</sub> + index</em> for block <em>n</em>. This allows out of order encryption/decryption.</li>
+<li><strong>Galoa-Counter Mode (GCM):</strong> the best?</li>
+</ul>
+</div> <!-- End Lecture -->
+<hr />
+<div class="lecture">
+
+<h1 id="message-authentication">Message Authentication</h1>
+<ul>
+<li>Because we cannot prevent authentication attacks, we at least want to be able to detect these attacks. In particular, we want:
+<ul>
+<li>Message Integrity: We know that the message recieved is the same as the message sent.</li>
+<li>Message Authenticity: We know that it was the person who we think it was who sent the message (not an impersonator).</li>
+<li>*This does not cover replay and side-channel attacks.</li>
+</ul></li>
+<li><strong>Tag:</strong> a hash or the like of the message, appended to the end. These only need to be 100-200 bits.</li>
+<li><strong>Existential Unforgeable for CMA:</strong> the adversary cannot create a valid tag for a message (not from the oracle) in polynomial time with more than negligible success. The adversary can query an oracle with polynomial number of messages and get their corresponding tags.</li>
+<li>Message authentication cannot just be reuse of encryption algorithms (they must be explicitly designed).
+<ul>
+<li>If we try to use the PRG construction of an encryption algorithm, we can forge a message. The tag ends up being a second encryption of the message. We can forge this by changing both the message and tag in the same place.</li>
+<li>Using ECB, if we encrypt two blocks and use them as the tags, we can do a reordering attack by swapping the messages and their tags.</li>
+<li>PRFs do work! (provided <em>F</em> is pseudo-random). The tag is generated by <em>t=F(k, m)</em>, and verification is done by checking <em>t'=F(k, m')</em>. In practice, any block cipher that looks like a PRF works efficiently.</li>
+</ul></li>
+</ul>
+<h2 id="arbitrary-length-constructions">Arbitrary length constructions</h2>
+<ul>
+<li>Tags for multiple blocks of the smae message must cascade into each other. This is because otherwise we can do substring, reordering, truncation, mix-and-match attacks.
+<ul>
+<li>Substring:</li>
+<li>Reordering:</li>
+<li>Truncation:</li>
+<li>Mix-and-Match:</li>
+</ul></li>
+<li><strong>CBC-MAC:</strong> the output is only the last block, rather than outputting each block. The IV is also just 0s (meaning the output is deterministic). This is efficient if <em>F</em> is efficient, but relatively slow because it is designed for encryption.</li>
+</ul>
+<h2 id="collision-resistant-hash-functions">Collision-Resistant Hash Functions</h2>
+<ul>
+<li>Adversarial attacks try to just produce two different inputs that hash to the same value.</li>
+<li>Collision-resistant: any efficient advesary cannot find two different inputs that hash to the same value with mroe than negligible probability. We want these outputs to be pseudo-random, and for the most secure (innefficient) attacks behave like random functions.</li>
+<li>We can probably create an arbitrary length collision resistant function from a fixed length collision resistant function.</li>
+<li><strong>Merkle-Damgaard Construction:</strong></li>
+<li>Most hash functions do not have private keys (either keys available to the adversary, or no keys).</li>
+<li><strong>HASH and MAC:</strong> This takes a generic collision resistant hash function, which makes this existentially unforgeable under CMA.</li>
+<li><strong>SHA3-MAC:</strong> This just uses the SHA-3 hash of the key concatenated with the message. This is not secure enough for just any Merkle-Damgaard construction.</li>
+<li><strong>HMAC:</strong> A double hash of the message. The first hash is of the message concatenated with rnadom strings and padding, which is then hashed again. This aims to deal with extension attacks.</li>
+</ul>
+<h2 id="ind-cca">IND-CCA</h2>
+<ul>
+<li>With random oracles, sometimes a chosen ciphertext does not map to a valid message. In this case, the oracle returns an error.</li>
+<li>PRF encryption does not satisfy IND-CCA. This also applies to all block ciphers. This is broken by the attacker querying for the bits flipped of the challenge ciphertext.</li>
+<li>To protect against IND-CCA, we then add a tag to the ciphertext, so if the ciphertext does not match the tag (ie. if the bits were flipped), then verification fails. This also requires that the encryption algorithm is IND-CMA secure.</li>
+</ul>
+<h2 id="threats">Threats</h2>
+<ul>
+<li>Replay:</li>
+<li>Re-ordering:</li>
+<li>Reflection:</li>
+<li>Solution:
+<ul>
+<li>Timestamps:</li>
+<li>Session Tokens:</li>
+</ul></li>
+</ul>
+</div>
+</body>
+</html>
