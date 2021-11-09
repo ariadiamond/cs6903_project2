@@ -7,13 +7,15 @@
 Step 1:
 
 |Endpoint|/create|
+|:-------|------:|
 |Method  |GET    |
 
-Returns cryptik id temporary session cookie to set passsword
+Returns CryptikID temporary session cookie to set passsword
 
 Step 2:
 
 |Endpoint|/setpassword|
+|:-------|-----------:|
 |Method  |POST        |
 |Data    |<ul><li>password</li><li>session cookie</li></ul>|
 
