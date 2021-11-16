@@ -679,5 +679,79 @@ function inverses(a, n) {
 <li>IND-CCA cannot be guaranteed because homomorphism and malleability helps break the schemes.</li>
 </ul>
 </div>
+
+<div class="lecture">
+
+<h1 id="digital-signatures">Digital Signatures</h1>
+<h2 id="definitions">Definitions</h2>
+<ul>
+<li>Digital signatures are arguably stronger than hand written signatures, as it is nearly impossible to digital signature for another message, as compared to a normal signature.</li>
+<li>Digital signatures are useful for data authenticity and integrity and is useful with advanced encryption.</li>
+<li>Digital signatures are the essentially the public key version of MACs, in that they are also publicly verifiable, transferable. They are stronger than MACs in that provide non-repudiation.</li>
+<li>Correctness:</li>
+<li>Security: we again have existential unforgability under a chosen message attack. This runs the signature algorithm polynomial times as an oracle.</li>
+<li><strong>Universal Forgeablity:</strong> an adversary can efficiently sign <em>any</em> message. This is useful for attackers, but we want a much stronger definition (existential unforgeability) for our schemes.</li>
+<li>With security, encryption and signature algorithms have very different goals (indistinguishability versus unforgeability), so their security guarantees are different for related schemes.</li>
+</ul>
+<h2 id="number-theory-based-schemes">Number theory based schemes</h2>
+<ul>
+<li><strong>Textbook RSA signature:</strong> this decrypts the message with the secret key, allowing for verification to be the encryption with the public key. This can be forged by choosing two <em>arbitrary</em> messages, then taking their product for both the messages and signatures for both messages (this works because RSA is product homomorphic).</li>
+<li><strong>RSA Full Domain Hash (RSA-FDH):</strong> this first hashes the message, then does the RSA decryption of it. This is existentially unforgeable under CMA if the hash function is secure. The hash has to return a value in all of <em>Z<sub>n</sub><sup>*</sup></em>, rather than the hash size.</li>
+<li><strong>Hash and Sign:</strong> this works provided the length is bounded by the modulus. Given that we can make the hash a specific length, this works in the general case. The public key includes the key for the hash.</li>
+<li><strong>Identification/User Authentication:</strong> the below scheme protects against passive (eavesdropping) and active (server intrusion, choose challenge) attacks.
+<ol type="1">
+<li>ID + proof setup</li>
+<li>Random challenge</li>
+<li>Proof answer given challenge</li>
+</ol></li>
+<li><span class="confused">What schemes are secure against active attacks? Does this essentially take an IND-CPA scheme and make it IND? And then because the attacker can do CMA, then they can fake a signature by flipping the bits?</span></li>
+<li><strong>Schnorr:</strong> this is secure against passive attacks.</li>
+<li><strong>Fiat-Shamir Transform:</strong> this changes an identification scheme into a signature scheme.</li>
+<li><strong>ElGamal Signatures:</strong> this is the precursor to DSA.</li>
+<li><strong>Digital Signature Algorithm (DSA):</strong> this uses ElGamal and the Fiat-Shamir transformation. This is secure given <em>F</em> is random (although it is not, but we haven't found attacks).</li>
+<li><strong>Elliptic Curve DSA (ECDSA):</strong> a modification of DSA to use elliptic curves (q-order subgroup of elliptic curve group of <em>Z<sub>p</sub><sup>*</sup></em> instead of ElGamal properties (q-order subgroup of <em>Z<sub>p</sub><sup>*</sup></em>).</li>
+<li><strong>Lamport's Scheme:</strong> this only requires collision intractible hash functions (this is an efficient one-way function, but any OWF works). This is fairly weak (one-time signature) because 2 or more CMA breaks the scheme.</li>
+<li><strong>Stateful-Based:</strong> signer keeps state, generating a new pk, sk pair for each message. The length of public keys is related to the number of messages to be sent.</li>
+<li><strong>Merkle Tree-Based:</strong> we can prove that each leaf (message) comes from the root. The public key must be regenerated each time a message is sent.</li>
+<li><strong>Chain-based:</strong> this is relatively slow (O(t) signature length, state size, and verification time). Each signature reveals all messages previously signed.</li>
+<li><strong>Tree-Based Lamport:</strong> generates part of a binary tree (similar to getting PRFs from PRG). Signs message with key at leaf. this is reasonably efficient (<em>O(log t)</em>). It is stateful but can be made stateless.</li>
+</ul>
+<div class="subelem"> <!-- ECC -->
+
+<h3 id="elliptic-curves">Elliptic Curves</h3>
+<ul>
+<li>Take some prime <em>p</em>, then comput an elliptic curve group based on \(y^2=x^3+Ax+B\ mod\ p\). To have no repeated roots, \(4A^3+27B^2 \neq 0\ mod\ p\).</li>
+<li>We can also get a third point from <em>R</em> from <em>P</em> and <em>Q</em>. <em>R</em> is another point on a line that spans through <em>P</em> and <em>Q</em>.</li>
+<li>Elliptic Curves with the operation addition (compared to multiplicative groups) is an Abelian group.</li>
+<li>Discrete log is now a multiplication problem: compute <em>x</em> from \(x \cdot P\). There are only exponential solutions (the others had subexponential).</li>
+<li>There's about <em>P</em> points and they can be efficiently generated.</li>
+<li>This is convenient because it allows for shorter keys (512 bits). All discrete logarithm problems (DH, ElGamal, etc. can be reformulated with ECC).</li>
+</ul>
+</div> <!-- End Subelem (ECC) -->
+
+<h2 id="public-key-infrastructure">Public Key Infrastructure</h2>
+<ul>
+<li>This is how we trust that someone's public key is actually their public key. We create a trusted server/recognized authority to verify identities.</li>
+<li>Certification Authority (CA): verifies identities, manages (gives/revokes) certificates and public keys.
+<ol type="1">
+<li>Generate public/secret keys.</li>
+<li>Go to CA to have them verify your keys. This can be done by proving your identify, by going in person, decrypting/signing messages from the CA, or using zero-knowledge proofs.</li>
+<li>Get messages from people.
+<ul>
+<li>They verify your identity by another channel. They must make sure it is valid, not expired, and not revoked.</li>
+</ul></li>
+<li>Decrypt your messages based on your secret key.</li>
+</ol></li>
+<li>Key Escrow: you have a special key where you can decrypt encrypted data (often requiring multiple parties each having a part of the secret key). This is so you can decrypt someone's messages (if someone forces you).</li>
+<li>Zero Trust: limits permissions because even if you are in a PKI, you cannot compromise others.</li>
+<li>Identity-Based Encryption: public key is any binary string that binds the user to it. A trusted server gives the user a secret key that allows them to decrypt messages sent to them. This is less popular than PKI.</li>
+</ul>
+<div class="subelem"> <!-- Merkle Hash trees -->
+
+<h2 id="merkle-hash-tree-signature-scheme">Merkle Hash Tree Signature Scheme</h2>
+<p><a href="http://merkle.com/papers/Thesis1979.pdf">link to paper</a></p>
+</div> <!-- End Subelem (Merkle) -->
+
+</div> <!-- End Lecture -->
 </body>
 </html>
