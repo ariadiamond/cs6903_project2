@@ -9,17 +9,16 @@ import (
 func main() {
     // Parse Command Line Options
     
-    srv := http.Server { // Create a server variable so we can do clean shutdowns
-        Addr: ":" + strconv.Itoa(port)
-    }
+    // Create a server variable so we can do clean shutdowns
+    srv := http.Server{ Addr: ":" + strconv.Itoa(port) }
     
     // Register Handlers (using default serve mux)
     // register.go
     http.HandleFunc("/create", CreateUser)
-    http.HandleFunc("/setpassword", SetPassword)
     // auth.go
     http.HandleFunc("/auth/1", AuthStep1)
     http.HandleFunc("/auth/2", AuthStep2)
+    http.HandleFunc("/getpk/", GetPublicKey)
     // message.go
     http.HandleFunc("/newChat", NewChat)
     http.HandleFunc("/send", SendMessage)

@@ -18,5 +18,12 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {}
  * server has the same hash and saved the nonce, so can do the same computation), the server sets a
  * session cookie keep the user logged in. The server stores the cookie with a reference to the
  * user's CryptikID for future operations.
+ * SELECT hash FROM Users WHERE userID = cryptikID;
  */
-func AuthStep2(w http.ResposneWriter, r *http.Request) {}
+func AuthStep2(w http.ResponseWriter, r *http.Request) {}
+
+/* GetPublicKey
+ *
+ */
+func GetPublicKey(w http.ResponseWriter, r *http.Request) {}
+ 
