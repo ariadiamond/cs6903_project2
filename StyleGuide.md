@@ -28,7 +28,7 @@ Language References:
 
 ## Server
 ### Golang
-- Soft tabs with 4 spaces as a tab
+- Hard tabs
 - 100 character max width
 
 Language References:

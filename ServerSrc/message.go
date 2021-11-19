@@ -2,7 +2,7 @@ package main
 
 // Includes
 import (
-    "net/http"
+	"net/http"
 )
 
 /* NewChat initializes a chat with the members specified. In order to have end-to-end encryption

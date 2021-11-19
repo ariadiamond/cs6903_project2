@@ -2,7 +2,7 @@ package main
 
 // Includes
 import (
-    "net/http"
+	"net/http"
 )
 
 /* CreateUser is reached when a user wants to create their account.
