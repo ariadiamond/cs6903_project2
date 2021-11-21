@@ -1,8 +1,9 @@
 name: Test
 on:
   push:
-    - 'ServerSrc/**.go'
-    - 'ServerTest/**'
+    paths:
+      - 'ServerSrc/**.go'
+      - 'ServerTest/**'
 permissions:
   contents: read
 

@@ -1,8 +1,9 @@
 name: Code Style
 on:
   push:
-    - '**.go'
-    - '**.py'
+    paths:
+      - '**.go'
+      - '**.py'
 
 jobs:
   lint-go:
