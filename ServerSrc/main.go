@@ -13,7 +13,6 @@ var Jarvis *sql.DB
 func setGlobals() {
 	NonceHolderMap  = make(map[string]NonceHolder)
 	SessionTokenMap = make(map[string]string)
-	
 }
 
 func main() {
@@ -23,6 +22,7 @@ func main() {
 	DEBUG := false
 
 	setGlobals()
+	// call function to initialize connection with Jarvis
 	// Create a server variable so we can do clean shutdowns
 	srv := http.Server{ Addr: ":" + strconv.Itoa(port) }
 	
