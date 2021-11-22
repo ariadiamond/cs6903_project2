@@ -1,5 +1,3 @@
-<div class="lecture">
-
 # API
 
 ## Account Creation
@@ -19,7 +17,11 @@ Step 2:
 |Method  |POST        |
 |Data    |<ul><li>password</li><li>session cookie</li></ul>|
 
-server hashes password and stores it.
+|Response Code|Data|
+|:------------|---:|
+|200          |<ul><li>CryptikID</li><li>Session token</li></ul>
+|400          |None|
+|500          |None|
 
 ## Authentication
 
@@ -33,6 +35,12 @@ server hashes password and stores it.
 |Method  |POST   |
 |Data    |id     |
 
+|Reponse Code|Data|
+|:-----------|---:|
+|200         |Nonce, encrypted secret file|
+|400         |None|
+|404         |None|
+
 **Step 2:**
 
 |Endpoint|/auth/2  |
@@ -40,12 +48,34 @@ server hashes password and stores it.
 |Method  |POST     |
 |Data    |challenge|
 
+|Response Code|Data|
+|:------------|---:|
+|200          |Session token|
+|403          |None|
+
+## Get a public Key
+
+|Endpoint|/getpk/\<crypikID\>|
+|:-------|------------------:|
+|Method  |GET                |
+
+|Response Code|Data              |
+|:------------|-----------------:|
+|200          |Public Key of user|
+|404          |None              |
+
 ## Send Message
 
 |Endpoint|/send|
 |:-------|----:|
 |Method  |POST |
-|Data    |<ul><li>To</li><li>From</li><li>Message</li></ul>|
+|Data    |<ul><li>To</li><li>Encrypted Message</li></ul>|
+
+|Response Code|Meaning|
+|:------------|------:|
+|200          |Success|
+|403          |Not authenticated|
+|404          |Chat does not exist|
 
 ## Get Messages
 
@@ -53,5 +83,3 @@ server hashes password and stores it.
 |:-------|--------:|
 |Method  |GET      |
 |Data    |Cookie   |
-
-</div> <!-- End Lecture -->

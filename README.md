@@ -14,3 +14,8 @@ This has not been written yet, so it does not do anything.
 
 ## Sources
 - [Askfm](https://ask.fm): our inspiration.
+
+## PostgreSQL
+- [Docker container](https://hub.docker.com/_/postgres)
+- [Dockerfile reference](https://docs.docker.com/engine/reference/builder/)
+- [Server configuration](https://www.postgresql.org/docs/current/runtime-config.html)
