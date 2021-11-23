@@ -3,32 +3,18 @@ package main
 // Includes
 import (
 	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
-
-const (
-	NONCE_SIZE = 128  >> 3 // 2^128 of random values
-)
-
-var NonceHolderMap  map[string]NonceHolder
-var SessionTokenMap map[string](string)
 
 type authStep1Data struct {
 	id string `json:"id"`
 }
 
 type authStep1Response struct {
-	nonce []byte `json:"nonce"`
+	nonce string `json:"nonce"`
 	file  []byte `json:"encryptedFile"`
-}
-
-type NonceHolder struct {
-	nonce      []byte
-	expireTime time.Time
 }
 
 type authStep2Data struct {
@@ -37,7 +23,7 @@ type authStep2Data struct {
 }
 
 type authStep2Response struct {
-	sessionToken []byte `json:"sessionToken"`
+	sessionToken string `json:"sessionToken"`
 }
 
 type GetPublicKeyData struct {
@@ -80,16 +66,12 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate nonce
-	nonce := make([]byte, NONCE_SIZE)
-	if _, err := rand.Read(nonce); err != nil {
+	nonce, err := AddNonce(clientData.id)
+	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-	NonceHolderMap[clientData.id] = NonceHolder{
-		nonce:      nonce,
-		expireTime: time.Now(),
-	}
-
+	
 	// send back response
 	response := authStep1Response{
 		nonce: nonce,
@@ -142,24 +124,22 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nonce, exists := NonceHolderMap[clientData.id];
+	nonce, exists := GetNonce(clientData.id);
 	if !exists {
 		w.WriteHeader(404)
 		return
 	}
 
-	if !ed25519.Verify(pubKey, nonce.nonce, clientData.signature) {
+	if !ed25519.Verify(pubKey, []byte(nonce), clientData.signature) {
 		w.WriteHeader(403)
 		return
 	}
 
-	sessionToken := make([]byte, NONCE_SIZE)
-	if _, err := rand.Read(sessionToken); err != nil {
+	sessionToken, err := AddSession(clientData.id)
+	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-
-	SessionTokenMap[string(sessionToken)] = clientData.id
 
 	response := authStep2Response{
 		sessionToken: sessionToken,
