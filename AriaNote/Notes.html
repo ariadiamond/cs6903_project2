@@ -742,9 +742,9 @@ function inverses(a, n) {
 </ul></li>
 <li>Decrypt your messages based on your secret key.</li>
 </ol></li>
-<li>Key Escrow: you have a special key where you can decrypt encrypted data (often requiring multiple parties each having a part of the secret key). This is so you can decrypt someone's messages (if someone forces you).</li>
-<li>Zero Trust: limits permissions because even if you are in a PKI, you cannot compromise others.</li>
-<li>Identity-Based Encryption: public key is any binary string that binds the user to it. A trusted server gives the user a secret key that allows them to decrypt messages sent to them. This is less popular than PKI.</li>
+<li><strong>Key Escrow:</strong> you have a special key where you can decrypt encrypted data (often requiring multiple parties each having a part of the secret key). This is so you can decrypt someone's messages (if someone forces you).</li>
+<li><strong>Zero Trust:</strong> limits permissions because even if you are in a PKI, you cannot compromise others.</li>
+<li><strong>Identity-Based Encryption:</strong> public key is any binary string that binds the user to it. A trusted server gives the user a secret key that allows them to decrypt messages sent to them. This is less popular than PKI.</li>
 </ul>
 <div class="subelem"> <!-- Merkle Hash trees -->
 
@@ -753,5 +753,66 @@ function inverses(a, n) {
 </div> <!-- End Subelem (Merkle) -->
 
 </div> <!-- End Lecture -->
+<div class="lecture">
+
+<h1 id="secure-multi-party-function-computation">Secure Multi-party Function Computation</h1>
+<ul>
+<li>Secure 2-party and secure multi-party computation are done differently.</li>
+<li><strong>Semi-Honest/Honest but Curious:</strong> the party follows the protocol properly, but once completing the protocol, they take any data they learned and try to learn more.</li>
+<li><strong>Malicious:</strong> arbitrarily deviate from the protocol.</li>
+</ul>
+<h2 id="secure-2-party-computation">Secure 2-Party Computation</h2>
+<ul>
+<li>Given two parties who want to compute data (each with a part of the data), we want to be able to have only the intended party get the answer while also having neither party learn about each other's data (except the result).</li>
+<li>This can be used for data analysis, intrusion detection, password verification, secret machine learning BS, and private program evaluation.</li>
+<li><strong>Yao Garbled Circuts:</strong> this was the start and solution of 2-party computation (later expanded to multi-party).</li>
+<li>Special purpose solutions are more efficient than general purpose because you can use specifics about the problem, but they do not translate to other problems.</li>
+<li>General purpose solutions can operate on any function represented in polynomial boolean or arithmetic circuts.</li>
+<li><strong>Ideal world:</strong> There is a trusted party that both parties can send their data to who will do the computation. We trust that the trusted party will not store the data or share any data with unauthorized parties. This is not a realistic solution.</li>
+<li>We define privacy guarantees as those in the ideal world (but the trusted party doesn't actually exist).</li>
+<li>Security is defined as an attacker being as successful in the ideal and real world.</li>
+<li>Hash based:
+<ul>
+<li><strong>Equality:</strong> take a random string <em>r</em>, then hash <em>r</em> concatenated with the data. Send <em>r</em> and the hash, then the other party can hash with <em>r</em> and their data and check equality.</li>
+<li><strong>Prefix:</strong></li>
+</ul></li>
+<li><strong>Fully Homomorphic Encryption (FHE):</strong> this is a general purpose solution. One party creates a public/secret key pair and encrypts their data. The other party then does the function evaluation over their data and the ciphertext. The first party can then decrypt the result of the function application.</li>
+<li><strong>Predicate Revealing Symmetric Encryption:</strong> rather than using homomorphic encryption (asymmetric), use symmetric encryption, which is much more efficient. This reveals some information by computing over the ciphertext, leaking information about the plaintext.
+<ul>
+<li><strong>Equality-Revealing:</strong> This requires the encryption to be deterministic (such as encrypting with a constant IV). This is still secure (only leaks equality).</li>
+<li><span class="confused">If we are encrypting with CBC mode, could we compute equality for blocks that were encrypted on different internal states? Or are we just using CBC, and instead of chaining, we pass in the IV each time?</span></li>
+<li><strong>Order Revealing:</strong> this computes less than. Currently researchers have not been able to leak only less than, rather they leak more.</li>
+</ul></li>
+</ul>
+<h3 id="garbled-circuts">Garbled Circuts</h3>
+<ul>
+<li><strong>Garbled Circuts:</strong> computation of any boolean circut (two inputs and one output) on symmetrically encrypted data. This allows the other party to compute one bit of information based off a string <em>x</em> where no information about <em>x</em> is leaked.</li>
+<li><strong>Garbled Gate:</strong> double (applied twice) deterministic encryption over both all possible input combinations. There's a bunch of zeros appended, which verifies that we are decrypting the right thing with the right key.</li>
+<li>For a garbled gate, one party can efficiently compute labels and ciphertexts, and send the ciphertexts to another party. The other party (receiving the ciphertexts and one of the labels) can efficiently compute over symmetric data, decrypting only the right label (which we know because there's a bunch of zeros at the end).</li>
+<li>When we decrypting multiple garbled circuts, we only need to give the half the labels (associated with one value <em>x</em>) and ciphertexts.</li>
+<li><span class="confused">Is this not exponentially expensive for the number of gates? Like it allows the party knowing <em>x</em> to selectively release information, but they have to generate/compute a <em>lot</em>. The recieeving party also has to do a decent amount of work too.</span></li>
+</ul>
+<h3 id="oblivious-transfer">Oblivious Transfer</h3>
+<ul>
+<li>To compute F(x, y), we can do garbled circuts for both <em>x</em> and <em>y</em>. We also add oblivious transfer to make this work.</li>
+<li><strong>Oblivious Transfer:</strong> this uses something similar to public key cryptography (Bellare-Micali uses number theory for ElGamal).</li>
+<li>Bellare-Micali:</li>
+<li>Two-party secure computation: The parties share certain data using oblivious transfer, then one party sends the garbled circut, then the other party computes it, and computes the garbled circut for their data after.</li>
+<li><strong>Boolean and arithmetic circuts are computationally equivalent.</strong> This means they can be transformed into each other's representations (at the cost of complexity).</li>
+</ul>
+<h2 id="multi-2-party-computation">Multi (&gt;2)-party computation</h2>
+<ul>
+<li>Given <em>n</em> parties that want to compute a function, where each party has a part of the input. The parties are willing to work together, but only a subset learn the result. Parties not receiving the output should learn nothing, and parties receiving the output should get only the result and no other information about the parties.
+<ul>
+<li><strong>Guaranteed output delivery:</strong> corrupted parties cannot keep honest parties from getting the output.</li>
+<li><strong>Fairness:</strong> corrupt parties cannot get the output before the honest parties.</li>
+<li><strong>Input Independence:</strong> corrupted parties cannot choose their inputs based on the inputs of honest parties. This is non-malleability.</li>
+</ul></li>
+<li>We have a handful of protocols that work even with some portion of corrupted parties, including getting secure MPC with a majority of corrupted parties (although this does not give fairness or guaranteed output delivery).</li>
+<li>If we have 2/3 of the parties being honest, we can get secure MPC with private channels, and secure MPC with &lt;1/2 of the parties using a broadcast channel.</li>
+<li><strong>Secret Sharing:</strong> a method of sharing data where only certain parties can read the secret data, and the other parties do not get <em>any</em> information. This works by generating secret data separately for each party. This does not use encryption!</li>
+<li><strong>BGW:</strong> represents the function over a finite field. This does addition which increases the degree by 1, and multiplication which doubles the degree. There is a subprotocol that reduces the degree.</li>
+</ul>
+</div>
 </body>
 </html>
