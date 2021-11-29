@@ -4,7 +4,7 @@ package main
 import (
 	"database/sql"
 	"flag"
-	// _ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,6 +21,17 @@ var (
 	debug    = false
 )
 
+func connectToDB() {
+	connStr := "user=server dbname=cryptik sslcert=cert.pem sslkey=key.pem"
+	Jarvis, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = Jarvis.Ping(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	// Parse Command Line Options
 	flag.Parse()
@@ -31,6 +42,7 @@ func main() {
 	}
 
 	// call function to initialize connection with Jarvis
+	connectToDB()
 	// Create a server variable so we can do clean shutdowns
 	srv := http.Server{ Addr: ":" + strconv.Itoa(*port) }
 	
@@ -51,6 +63,6 @@ func main() {
 	if debug && *insecure {
 		log.Fatal(srv.ListenAndServe())
 	} else {
-		log.Fatal(srv.ListenAndServeTLS("ServerSrc/cert.pem", "ServerSrc/key.pem"))
+		log.Fatal(srv.ListenAndServeTLS("./cert.pem", "./key.pem"))
 	}
 }

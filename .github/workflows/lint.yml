@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: golanci/golangci-lint-action@v2
+      - uses: golangci/golangci-lint-action@v2
         with:
           working-directory: ServerSrc
           skip-go-installation: true
