@@ -42,7 +42,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	
+
+    // Validate certificate
+    if !ValidateCert(data.publicKey) {
+        w.WriteHeader(400)
+        return
+    }
+
 	/* Alright now we can start doing things */
 	// lock new user mutex
 	newUserMutex.Lock()

@@ -16,9 +16,9 @@ type Nonce_t struct {
 }
 
 const (
-	NONCE_SIZE = 128 >> 3
-	TOKEN_SIZE = 128 >> 3 // 2^128 of random values
-	
+	NONCE_SIZE = 128
+	TOKEN_SIZE = 128 // 2^128 of random values
+
 //	NONCE_EXPIRATION = 
 //	TOKEN_EXPIRATION = 
 )
@@ -32,7 +32,7 @@ var (
  * It also returns the token to the caller.
  */
 func AddSession(id string) (string, error) {
-	token := make([]byte, TOKEN_SIZE)
+	token := make([]byte, TOKEN_SIZE >> 3)
 	if _, err := rand.Read(token); err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func RemoveToken() {
  * calling function. If a nonce cannot be generated, an error is returned.
  */
 func AddNonce(id string) (string, error) {
-	nonce := make([]byte, NONCE_SIZE)
+	nonce := make([]byte, NONCE_SIZE >> 3)
 	if _, err := rand.Read(nonce); err != nil {
 		return "", err
 	}

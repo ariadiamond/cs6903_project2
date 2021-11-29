@@ -55,7 +55,11 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO check ID is valid
+	// check ID is valid
+    if !ValidateId(clientData.id) {
+        w.WriteHeader(400)
+        return
+    }
 
 	/* We did our checks, we can now try to do things */
 	// Open user secret file
