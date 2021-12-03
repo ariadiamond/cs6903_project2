@@ -5,12 +5,22 @@ import (
 	"net/http"
 	"strings"
 	"encoding/json"
+	"time"
 )
 
 type SendMessageData struct {
 	messageSent	string `json:"messageSent"`
 	sessionToken string `json:"sessionToken"`
 	channel	int `json:"channel"`
+}
+
+type GetMessagesData struct{
+	sessionToken string `json:sessionToken"`
+	userTimestamp time.Time `json:"userTimestamp"`
+}
+
+type GetMessagesResponse struct {
+	messages []string `json:"messages"`
 }
 
 /* NewChat initializes a chat with the members specified. In order to have end-to-end encryption
@@ -107,4 +117,58 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
  *
  * The client needs to send their session cookie along with the request.
  */
-func GetMessages(w http.ResponseWriter, r *http.Request) {}
+func GetMessages(w http.ResponseWriter, r *http.Request) {
+
+	/* Start with checks to make sure the client data is valid. */
+	// Check for the correct HTTP method
+	if (r.Method != http.MethodPost) {
+		w.WriteHeader(400)
+		return
+	}
+
+	//
+	var serverData GetMessagesData
+	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
+		w.WriteHeader(400)
+		return
+	}
+
+	// Parse data and error check
+	id, exist := DereferenceToken(serverData.sessionToken)
+	if !exist {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Query database for any messages not yet recieved
+ 	rows, err := Jarvis.Query(`SELECT message FROM messages WHERE channel in (SELECT channel FROM channels WHERE members LIKE $1) AND messageTimestamp > $2`, id, serverData.userTimestamp)
+ 	if err != nil {
+ 		w.WriteHeader(404)
+ 		return
+ 	}
+ 	if !rows.Next() {
+ 		w.WriteHeader(404)
+ 		return
+ 	}
+
+	var message string
+
+	var response GetMessagesResponse
+
+	// Iterate through returned messages
+	for ; rows.Next(); err = rows.Scan(&message) {
+		if err != nil {
+			// >:(
+			w.WriteHeader(400)
+			return
+		}
+		response.messages = append(response.messages, message)
+	}
+
+ 	// Return messages 
+	w.WriteHeader(200)
+	if err:= json.NewEncoder(w).Encode(response); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+}
