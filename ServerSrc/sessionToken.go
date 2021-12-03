@@ -19,8 +19,8 @@ const (
 	NONCE_SIZE = 128
 	TOKEN_SIZE = 128 // 2^128 of random values
 
-//	NONCE_EXPIRATION = 
-//	TOKEN_EXPIRATION = 
+	NONCE_EXPIRATION = time.Minute
+	TOKEN_EXPIRATION = time.Hour * 24 // 1 day
 )
 
 var (
@@ -78,10 +78,24 @@ func AddNonce(id string) (string, error) {
 }
 
 func GetNonce(id string) (string, bool) {
+	if !ValidateId(id) {
+		return "", false
+	}
 	nonce, exist := NonceHolder[id]
 	if !exist {
 		return "", false
 	}
 	// check that nonce has not expired
 	return nonce.nonce, true
+}
+
+func DereferenceToken(token string) (string, bool) {
+	if !ValidateToken(token) {
+		return "", false
+	}
+	id, exist := SessionHolder[token]
+	if !exist {
+		return "", false
+	}
+	return id.id, true
 }

@@ -27,6 +27,20 @@ func TestValidateId(t *testing.T) {
 
 func TestValidateCert(t *testing.T) {
 	t.SkipNow()
+	
+	strings := []struct {
+		cert string
+		pass bool
+	} {
+		{`SELECT * FROM Users /* -----BEGIN CERTIFICATE------
+		                         hi
+		                         -----END CERITIFICATE----- */`, false},
+	}
+	for _, elem := range(strings) {
+		if ValidateCert(elem.cert) != elem.pass {
+			t.FailNow()
+		}
+    }
 }
 
 func TestValidateNonce(t *testing.T) {

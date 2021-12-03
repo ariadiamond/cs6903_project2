@@ -8,7 +8,7 @@ import (
 // each call
 var (
 	reId = regexp.MustCompile(`[^0-9a-fA-F]`)
-	reCert = regexp.MustCompile(`(-----BEGIN CERTIFICATE-----\n)([^0-9a-zA-Z/+=])(\n-----END CERTIFICATE-----)`)
+	reCert = regexp.MustCompile(`(-----BEGIN CERTIFICATE-----\n)([0-9a-zA-Z/+=\n]*)(\n-----END CERTIFICATE-----)`)
 	reNonce = regexp.MustCompile(`[^0-9a-fA-F]`)
 	reToken = regexp.MustCompile(`[^0-9a-fA-F]`)
 )
@@ -27,8 +27,10 @@ func ValidateId(id string) bool {
 	return true
 }
 
+// TODO Fix if cert does not start or end with -----... CERTIFICATE-----
+// if cert[:len(beginCert)] != "-----BEGIN CERTIFICATE-----" and for end
 func ValidateCert(cert string) bool {
-	if reCert.Find([]byte(cert)) != nil {
+	if reCert.Find([]byte(cert)) == nil {
 		return false
 	}
 	return true
@@ -48,7 +50,7 @@ func ValidateToken(token string) bool {
 	if len(token) != (TOKEN_SIZE >> 2) {
 		return false
 	}
-	if reNonce.Find([]byte(token)) != nil {
+	if reToken.Find([]byte(token)) != nil {
 		return false
 	}
 	return true
