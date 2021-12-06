@@ -2,7 +2,6 @@ package main
 
 // Includes
 import (
-	"math/big"
 	"net/http"
 	"strings"
 	"encoding/json"
@@ -23,80 +22,6 @@ type GetMessagesData struct{
 type GetMessagesResponse struct {
 	messages []string `json:"messages"`
 }
-
-type newChatData struct {
-	token   string   `json:"sessionToken"`
-	members []string `json:"members"`
-	g       big.Int   `json:"g"`
-	p       big.Int   `json:"p"`
-	exps    []big.Int `json:"exponents"`
-}
-
-const (
-	MAX_MEMBERS = 10
-)
-
-
-/* NewChat initializes a chat with the members specified. In order to have end-to-end encryption
- * (in which the server is not an end) using symmetric keys, all users must accept and generate a
- * secret for generation of the symmetric key. This just creates the server side state and places a
- * notification for the users of the group chat to accept or decline the next time they are active.
- *
- * The server side state is currently undefined, but this could be a SQL table (if we decide to
- * store data that way), or just a special message on the user's SQL table.
- *
- * The client needs to send their session cookie along with the request.
- */
-// TODO This one aria!!
-func NewChat(w http.ResponseWriter, r *http.Request) {
-	/* Check validity */
-	if r.Method != http.MethodPost {
-		w.WriteHeader(400)
-		return
-	}
-	
-	var clientData newChatData
-	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
-		w.WriteHeader(400)
-		return
-	}
-	
-	id, exist := DereferenceToken(clientData.token)
-	if !exist {
-		w.WriteHeader(403)
-		return
-	}
-	
-	for _, val := range(clientData.members) {
-		if !ValidateId(val) {
-			w.WriteHeader(400)
-			return
-		}
-	}
-	if (id != clientData.members[0]) || (len(clientData.members) > MAX_MEMBERS) {
-		w.WriteHeader(400)
-		return
-	}
-	
-	/* We have validated input, so let's do things */
-	stmt, err := Jarvis.Prepare(`INSERT INTO Channels(members, next, g, p, exps) FROM ($1, $2, $3, $4, $5)`)
-	_, err = stmt.Exec(strings.Join(clientData.members, ","), clientData.members[0], clientData.g, clientData.p, clientData.exps)
-	if err != nil {
-		w.WriteHeader(500)
-		return
-	}
-	
-	w.WriteHeader(200)
-}
-
-/* AcceptChat is a user's response to joining a chat. If they deny, the chat cannot be created,
- * meaning all users must accept the chat for it to be created, and for anyone to send messages in
- * it. If they accept, the client generates a secret (not shared with the server), but does O(m)
- * exponentiations where m is the number of people in the chat. These exponentiations are shared
- * with the server, as they are part of Diffie Hellman Key Agreement, so this information does not
- * leak information.
- */
-func AcceptChat(w http.ResponseWriter, r *http.Request) {}
 
 /* SendMessage sends messages to chats that have been initialized (someone has called NewChat and
  * the remaining people have accepted the chat). On the serverside, the server just inserts a new

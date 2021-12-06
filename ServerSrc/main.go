@@ -16,7 +16,7 @@ var Jarvis *sql.DB
 // Command Line Arugments
 var (
 	port     = flag.Int("port", 4443, "Port to run HTTP Server on")
-	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the" +
+	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the " +
 		"DEBUG variable to be set")
 	debug    = false
 )
@@ -49,13 +49,17 @@ func main() {
 	// Register Handlers (using default serve mux)
 	// register.go
 	http.HandleFunc("/create", CreateUser)
+	http.HandleFunc("/store",  StoreSecret)
 	// auth.go
 	http.HandleFunc("/auth/1", AuthStep1)
 	http.HandleFunc("/auth/2", AuthStep2)
 	http.HandleFunc("/getpk/", GetPublicKey)
+	// chat.go
+	http.HandleFunc("/newChat",    NewChat)
+	http.HandleFunc("/acceptChat", AcceptChat)
+	http.HandleFunc("/findChat",   FindChat)
 	// message.go
-	http.HandleFunc("/newChat", NewChat)
-	http.HandleFunc("/send", SendMessage)
+	http.HandleFunc("/send",     SendMessage)
 	http.HandleFunc("/retrieve", GetMessages)
 	
 	// Run server

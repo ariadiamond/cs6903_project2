@@ -52,6 +52,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	/* Alright now we can start doing things */
 	// lock new user mutex
 	newUserMutex.Lock()
+	defer newUserMutex.Unlock() // with a successful execution, this unlocks late
+	
 	// get a new cryptikID
 	newByteID := make([]byte, ID_LEN >> 1)
 	var newID string
@@ -66,13 +68,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		// check if this ID has been used already
 		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Users WHERE id = ?`, newID)
 		if err != nil {
-			// what do we do?
+			w.WriteHeader(500)
+			return
 		}
 		if !rows.Next() {
-			// how did this happen?
+			w.WriteHeader(500)
+			return
 		}
 		if rows.Scan(&numRes) != nil {
-			// error
+			w.WriteHeader(500)
+			return
 		}
 		rows.Close()
 	}
@@ -83,9 +88,6 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	
-	// unlock new user mutex
-	newUserMutex.Unlock()
 	
 	// Generate and add session token
 	sessionToken, err := AddSession(newID)

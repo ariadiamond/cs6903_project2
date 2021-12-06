@@ -24,12 +24,15 @@ jobs:
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
-    needs: build
     defaults:
       run:
         shell: bash
         working-directory: ServerSrc
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-verion: '1.17'
       - run: go test -v
 
 #  functional:
