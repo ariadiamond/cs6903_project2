@@ -3,18 +3,21 @@ FROM postgres:14.1
 # Because I am nice to people who use Windows
 # escape=`
 
-# Set up
-RUN initdb cryptik
-RUN createuser server
+# Set up 
+WORKDIR /docker
 
 # Set environment variables
-ENV POSTGRES_PASSWORD= # TODO set password here!
-ENV PGDATA=/var/lib/postgresql/data # This is the default, but is set so we can copy config file
+ENV POSTGRES_PASSWORD=unused
+# ENV PGDATA=/var/lib/postgresql/data # implicit
 
-# Copy configuation file and key pair into container
-COPY postgresql.conf ${PGDATA}/postgresql.conf
-COPY server.crt ${PGDATA}/server.crt
-COPY server.key ${PGDATA}/server.key
+# Copy key pair into container
+COPY server.crt    .
+COPY server.key    .
+COPY postgresql.conf .
+
+# Copy in initialization scripts
+COPY setup.sql /docker-entrypoint-initdb.d/setup.sql
+COPY setup.sh  /docker-entrypoint-initdb.d/setup.sh
 
 # Expose default port number for postgres
 EXPOSE 5432

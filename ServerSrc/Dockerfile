@@ -5,8 +5,9 @@ FROM golang:1.17.3-alpine
 WORKDIR /docker
 
 # Copy our go files into the container
-COPY *.go /docker
-COPY go.mod /docker
+COPY *.go .
+COPY go.mod .
+COPY go.sum .
 
 # Build our executable 
 RUN go build
