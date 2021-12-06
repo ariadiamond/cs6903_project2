@@ -117,11 +117,12 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Channels WHERE channel = ?;`, channelBI)
-		defer rows.Close()
 		if err != nil {
 			w.WriteHeader(500)
 			return	
 		}
+		defer rows.Close()
+		
 		if !rows.Next() {
 			w.WriteHeader(500)
 			return
@@ -141,7 +142,12 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// :)
-	w.WriteHeader(200)
+	response := newChatResponse {
+		int(channel),
+	}
+	if json.NewEncoder(w).Encode(response) != nil {
+		w.WriteHeader(500)
+	}
 }
 
 /* AcceptChat is a user's response to joining a chat. If they deny, the chat cannot be created,
@@ -172,11 +178,11 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 	
 	/* get channel information, so we can do a little more validation */
 	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = ?;`, id)
-	defer rows.Close()
 	if err != nil || !rows.Next() {
 		w.WriteHeader(404)
 		return
 	}
+	defer rows.Close()
 	
 	var memberResponse string
 	if rows.Scan(&memberResponse) != nil {
@@ -248,14 +254,17 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := Jarvis.Query(`SELECT channel, members, g, p, exps, signature FROM Channels WHERE next = ?;`,
 		id)
-	defer rows.Close()
 	if err != nil {
 		w.WriteHeader(400)
 		return
 	}
+	defer rows.Close()
 	
 	if !rows.Next() { // there are no new chats to act on
-		w.Write([]byte("[]")) // implicit 200
+		_, err := w.Write([]byte("[]")) // implicit 200
+		if err != nil {
+			w.WriteHeader(500)
+		}
 		return
 	}
 	

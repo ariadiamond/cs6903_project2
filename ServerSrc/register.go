@@ -71,6 +71,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			return
 		}
+		defer rows.Close()
+		
 		if !rows.Next() {
 			w.WriteHeader(500)
 			return

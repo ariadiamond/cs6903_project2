@@ -15,7 +15,7 @@ type SendMessageData struct {
 }
 
 type GetMessagesData struct{
-	sessionToken string `json:sessionToken"`
+	sessionToken string `json:"sessionToken"`
 	userTimestamp time.Time `json:"userTimestamp"`
 }
 
@@ -60,6 +60,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)
@@ -74,7 +75,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.Index(members, id) == -1 {
+	if !strings.Contains(members, id) {
 		w.WriteHeader(403)
 		return
 	}
@@ -125,6 +126,8 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
  		w.WriteHeader(404)
  		return
  	}
+ 	defer rows.Close()
+ 	
  	if !rows.Next() {
  		w.WriteHeader(404)
  		return

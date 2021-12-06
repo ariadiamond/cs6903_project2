@@ -82,9 +82,8 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		file:  encryptedData,
 	}
 
-	w.WriteHeader(200) // :)
-	if err:= json.NewEncoder(w).Encode(&response); err != nil {
-		w.WriteHeader(500) // TODO will this superfluous 500?
+	if  json.NewEncoder(w).Encode(&response) != nil { // implicit 200
+		w.WriteHeader(500)
 		return
 	}
 }
@@ -115,6 +114,7 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)
@@ -180,6 +180,7 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)

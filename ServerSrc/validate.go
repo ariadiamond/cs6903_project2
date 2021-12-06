@@ -21,37 +21,25 @@ func ValidateId(id string) bool {
 	if len(id) != ID_LEN {
 		return false
 	}
-	if reId.Find([]byte(id)) != nil {
-		return false
-	}
-	return true
+	return reId.Find([]byte(id)) == nil
 }
 
 // TODO Fix if cert does not start or end with -----... CERTIFICATE-----
 // if cert[:len(beginCert)] != "-----BEGIN CERTIFICATE-----" and for end
 func ValidateCert(cert string) bool {
-	if reCert.Find([]byte(cert)) == nil {
-		return false
-	}
-	return true
+	return reCert.Find([]byte(cert)) != nil
 }
 
 func ValidateNonce(nonce string) bool {
 	if len(nonce) != (NONCE_SIZE >> 2) {
 		return false
 	}
-	if reNonce.Find([]byte(nonce)) != nil {
-		return false
-	}
-	return true
+	return reNonce.Find([]byte(nonce)) == nil
 }
 
 func ValidateToken(token string) bool {
 	if len(token) != (TOKEN_SIZE >> 2) {
 		return false
 	}
-	if reToken.Find([]byte(token)) != nil {
-		return false
-	}
-	return true
+	return reToken.Find([]byte(token)) == nil
 }
