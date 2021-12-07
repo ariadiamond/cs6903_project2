@@ -9,29 +9,29 @@ import (
 )
 
 type authStep1Data struct {
-	id string `json:"id"`
+	Id string `json:"id"`
 }
 
 type authStep1Response struct {
-	nonce string `json:"nonce"`
-	file  []byte `json:"encryptedFile"`
+	Nonce string `json:"nonce"`
+	File  []byte `json:"encryptedFile"`
 }
 
 type authStep2Data struct {
-	id        string `json:"id"`
-	signature []byte `json:"signature"`
+	Id        string `json:"id"`
+	Signature []byte `json:"signature"`
 }
 
 type authStep2Response struct {
-	sessionToken string `json:"sessionToken"`
+	SessionToken string `json:"sessionToken"`
 }
 
-type GetPublicKeyData struct {
-	id				string `json:"id"`
+type getPublicKeyData struct {
+	Id string `json:"id"`
 }
 
-type GetPublicKeyResponse struct {
-	pubKey		[ed25519.PublicKeySize]byte `json:"pubKey"`
+type getPublicKeyResponse struct {
+	PubKey [ed25519.PublicKeySize]byte `json:"pubKey"`
 }
 
 
@@ -56,21 +56,21 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check ID is valid
-    if !ValidateId(clientData.id) {
+    if !ValidateId(clientData.Id) {
         w.WriteHeader(400)
         return
     }
 
 	/* We did our checks, we can now try to do things */
 	// Open user secret file
-	encryptedData, err := ioutil.ReadFile("UserKeys/" + clientData.id)
+	encryptedData, err := ioutil.ReadFile("UserKeys/" + clientData.Id)
 	if err != nil {
 		w.WriteHeader(404)
 		return
 	}
 
 	// generate nonce
-	nonce, err := AddNonce(clientData.id)
+	nonce, err := AddNonce(clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
 		return
@@ -78,8 +78,8 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	
 	// send back response
 	response := authStep1Response{
-		nonce: nonce,
-		file:  encryptedData,
+		Nonce: nonce,
+		File:  encryptedData,
 	}
 
 	if  json.NewEncoder(w).Encode(&response) != nil { // implicit 200
@@ -109,7 +109,7 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.id)
+	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.Id)
 	if err != nil {
 		w.WriteHeader(404)
 		return
@@ -128,25 +128,25 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nonce, exists := GetNonce(clientData.id);
+	nonce, exists := GetNonce(clientData.Id);
 	if !exists {
 		w.WriteHeader(404)
 		return
 	}
 
-	if !ed25519.Verify(pubKey, []byte(nonce), clientData.signature) {
+	if !ed25519.Verify(pubKey, []byte(nonce), clientData.Signature) {
 		w.WriteHeader(403)
 		return
 	}
 
-	sessionToken, err := AddSession(clientData.id)
+	sessionToken, err := AddSession(clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
 
 	response := authStep2Response{
-		sessionToken: sessionToken,
+		SessionToken: sessionToken,
 	}
 
 	if err:= json.NewEncoder(w).Encode(&response); err != nil { // implicit 200
@@ -169,13 +169,13 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var clientData GetPublicKeyData
+	var clientData getPublicKeyData
 	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
 		return
 	}
 
-	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.id)
+	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.Id)
 	if err != nil {
 		w.WriteHeader(404)
 		return
@@ -187,16 +187,14 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var responseData GetPublicKeyResponse
-
-	if err := rows.Scan(&responseData.pubKey); err != nil {
+	var responseData getPublicKeyResponse
+	if err := rows.Scan(&responseData.PubKey); err != nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	w.WriteHeader(200)
-	if err:= json.NewEncoder(w).Encode(&responseData.pubKey); err != nil {
+	if err:= json.NewEncoder(w).Encode(responseData); err != nil { // implicit 200
 		w.WriteHeader(500)
-		return
+		// implicit return
 	}
 }

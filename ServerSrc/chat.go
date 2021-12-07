@@ -10,37 +10,37 @@ import (
 )
 
 type newChatData struct {
-	token     string   `json:"sessionToken"`
-	members   []string `json:"members"`
-	g         big.Int  `json:"g"`
-	p         big.Int  `json:"p"`
-	exps      []string `json:"exponents"`
-	signature string   `json:"signature"`
+	Token     string   `json:"sessionToken"`
+	Members   []string `json:"members"`
+	G         big.Int  `json:"g"`
+	P         big.Int  `json:"p"`
+	Exps      []string `json:"exponents"`
+	Signature string   `json:"signature"`
 }
 
 type newChatResponse struct {
-	channel int `json:"channel"`
+	Channel int `json:"channel"`
 }
 
 type acceptData struct {
-	token     string   `json:"sessionToken"`
-	channel   int      `json:"channel"`
-	accept    bool     `json:"accept"`
-	exps      []string `json:"exponents"`
-	signature string   `json:"signature"`
+	Token     string   `json:"sessionToken"`
+	Channel   int      `json:"channel"`
+	Accept    bool     `json:"accept"`
+	Exps      []string `json:"exponents"`
+	Signature string   `json:"signature"`
 }
 
 type findData struct {
-	token string `json:"sessionToken"`
+	Token string `json:"sessionToken"`
 }
 
 type findResponse struct {
-	channel int      `json:"channel"`
-	members []string `json:"members"`
-	g       big.Int  `json:"g"`
-	p       big.Int  `json:"p"`
-	exps    []string `json:"exponents"`
-	signature string `json:"signature"`
+	Channel int      `json:"channel"`
+	Members []string `json:"members"`
+	G       big.Int  `json:"g"`
+	P       big.Int  `json:"p"`
+	Exps    []string `json:"exponents"`
+	Signature string `json:"signature"`
 }
 
 const (
@@ -85,19 +85,19 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	id, exist := DereferenceToken(clientData.token)
+	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
 		return
 	}
 	
-	for _, val := range(clientData.members) {
+	for _, val := range(clientData.Members) {
 		if !ValidateId(val) {
 			w.WriteHeader(400)
 			return
 		}
 	}
-	if (id != clientData.members[0]) || (len(clientData.members) > MAX_MEMBERS) {
+	if (id != clientData.Members[0]) || (len(clientData.Members) > MAX_MEMBERS) {
 		w.WriteHeader(400)
 		return
 	}
@@ -134,9 +134,9 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	channel := channelBI.Uint64()
 	
 	// Insert new data
-	stmt, err := Jarvis.Prepare(`INSERT INTO Channels(channel, members, next, g, p, exps) VALUES ($1, $2, $3, $4, $5, $6);`)
-	_, err = stmt.Exec(channel, strings.Join(clientData.members, ","),
-		clientData.members[1], clientData.g, clientData.p, clientData.exps)
+	stmt, err := Jarvis.Prepare(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7);`)
+	_, err = stmt.Exec(channel, strings.Join(clientData.Members, ","),
+		clientData.Members[1], clientData.G, clientData.P, clientData.Exps, clientData.Signature)
 	if err != nil {
 		w.WriteHeader(500)
 		return
@@ -172,7 +172,7 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get an ID from the sessionToken
-	id, exist := DereferenceToken(clientData.token)
+	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
 		return
@@ -206,23 +206,23 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	/* We did our validation, now let's do things! */
-	if clientData.accept {
+	if clientData.Accept {
 		var exps string
-		if len(clientData.exps) == 0 {
+		if len(clientData.Exps) == 0 {
 			next = "NULL"
 			exps = "NULL"
 		} else {
-			exps = "'" + strings.Join(clientData.exps, ",") + "'"
+			exps = "'" + strings.Join(clientData.Exps, ",") + "'"
 			next = "'" + next + "'"
 		}
 		
 		if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4;`,
-			next, exps, clientData.signature, clientData.channel); err != nil {
+			next, exps, clientData.Signature, clientData.Channel); err != nil {
 			w.WriteHeader(500)
 			return
 		}
 	} else { // the client didn't want to joing the chat, so it no longer exists
-		if _, err := Jarvis.Exec(`DELETE FROM Channels WHERE channel = ?;`, clientData.channel);
+		if _, err := Jarvis.Exec(`DELETE FROM Channels WHERE channel = ?;`, clientData.Channel);
 			err != nil {
 			w.WriteHeader(500)
 			return
@@ -249,7 +249,7 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	id, exist := DereferenceToken(clientData.token)
+	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
 		return
@@ -272,9 +272,9 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	
 	response := make([]findResponse, 0)
 	var chat findResponse
-	for err = rows.Scan(&chat.channel, &chat.members, &chat.g, &chat.p, &chat.exps, &chat.signature);
+	for err = rows.Scan(&chat.Channel, &chat.Members, &chat.G, &chat.P, &chat.Exps, &chat.Signature);
 		rows.Next();
-		err = rows.Scan(&chat.channel, &chat.members, &chat.g, &chat.p, &chat.exps, &chat.signature) {
+		err = rows.Scan(&chat.Channel, &chat.Members, &chat.G, &chat.P, &chat.Exps, &chat.Signature) {
 		if err != nil {
 			w.WriteHeader(500)
 			return

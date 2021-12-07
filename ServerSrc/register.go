@@ -10,12 +10,12 @@ import (
 )
 
 type createUserData struct {
-	publicKey string `json:"publicKey"`
+	PublicKey string `json:"publicKey"`
 }
 
 type createUserResponse struct {
-	id           string `json:"id"`
-	sessionToken string `json:"sesssionToken"`
+	Id           string `json:"id"`
+	SessionToken string `json:"sesssionToken"`
 }
 
 const (
@@ -44,7 +44,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
     // Validate certificate
-    if !ValidateCert(data.publicKey) {
+    if !ValidateCert(data.PublicKey) {
         w.WriteHeader(400)
         return
     }
@@ -84,7 +84,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		rows.Close()
 	}
 	
-	if _, err := Jarvis.Exec(`INSERT INTO Users VALUES ($1, $2);`, newID, data.publicKey);
+	if _, err := Jarvis.Exec(`INSERT INTO Users VALUES ($1, $2);`, newID, data.PublicKey);
 		err != nil {
 		// What do we do? just fail?
 		w.WriteHeader(500)
@@ -100,8 +100,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	
 	// Respond to Client
 	response := createUserResponse{
-		id:           newID,
-		sessionToken: sessionToken,
+		Id:           newID,
+		SessionToken: sessionToken,
 	}
 	
 	if err := json.NewEncoder(w).Encode(response); err != nil { // implicit 200

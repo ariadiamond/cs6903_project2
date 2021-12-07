@@ -22,7 +22,7 @@ var (
 )
 
 func connectToDB() {
-	connStr := "user=server dbname=cryptik sslcert=cert.pem sslkey=key.pem"
+	connStr := "user=postgres dbname=postgres password=unused"
 	Jarvis, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
