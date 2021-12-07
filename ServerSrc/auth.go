@@ -149,16 +149,16 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		sessionToken: sessionToken,
 	}
 
-	w.WriteHeader(200)
-	if err:= json.NewEncoder(w).Encode(&response); err != nil {
+	if err:= json.NewEncoder(w).Encode(&response); err != nil { // implicit 200
 		w.WriteHeader(500)
-		return
+		// implicit return
 	}
 }
 
 
 /* GetPublicKey
  *
+ * TODO: convert to get request with id as part of path
  */
 func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 

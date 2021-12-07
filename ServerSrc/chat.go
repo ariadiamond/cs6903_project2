@@ -145,8 +145,10 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	response := newChatResponse {
 		int(channel),
 	}
-	if json.NewEncoder(w).Encode(response) != nil {
+	
+	if json.NewEncoder(w).Encode(response) != nil { // implicit 200
 		w.WriteHeader(500)
+		// implicit return
 	}
 }
 

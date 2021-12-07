@@ -9,7 +9,7 @@ import (
 )
 
 type SendMessageData struct {
-	messageSent	string `json:"messageSent"`
+	messageSent	string `json:"message"`
 	sessionToken string `json:"sessionToken"`
 	channel	int `json:"channel"`
 }
@@ -84,7 +84,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	// Insert new row into table with message sent
 	_, err = Jarvis.Exec(`INSERT INTO messages (channel, message) VALUES ($1, $2)`, serverData.channel, serverData.messageSent)
 	if err != nil {
-		w.WriteHeader(404)
+		w.WriteHeader(500)
 		return
 	}
 

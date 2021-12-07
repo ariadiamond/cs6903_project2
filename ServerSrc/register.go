@@ -103,10 +103,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		id:           newID,
 		sessionToken: sessionToken,
 	}
-	w.WriteHeader(200)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	
+	if err := json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
-		return
+		// implicit return
 	}
 
 }
