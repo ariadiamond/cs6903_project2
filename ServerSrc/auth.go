@@ -26,10 +26,6 @@ type authStep2Response struct {
 	SessionToken string `json:"sessionToken"`
 }
 
-type getPublicKeyData struct {
-	Id string `json:"id"`
-}
-
 type getPublicKeyResponse struct {
 	PubKey [ed25519.PublicKeySize]byte `json:"pubKey"`
 }
@@ -98,13 +94,13 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
  */
 func AuthStep2(w http.ResponseWriter, r *http.Request) {
 
-	if (r.Method != http.MethodPost){
+	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
 		return
 	}
 
 	var clientData authStep2Data
-	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
+	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
 		w.WriteHeader(400)
 		return
 	}
@@ -123,12 +119,12 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 
 	pubKey := make([]byte, ed25519.PublicKeySize)
 
-	if err := rows.Scan(&pubKey); err != nil {
+	if rows.Scan(&pubKey) != nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	nonce, exists := GetNonce(clientData.Id);
+	nonce, exists := GetNonce(clientData.Id)
 	if !exists {
 		w.WriteHeader(404)
 		return
@@ -149,7 +145,7 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		SessionToken: sessionToken,
 	}
 
-	if err:= json.NewEncoder(w).Encode(&response); err != nil { // implicit 200
+	if json.NewEncoder(w).Encode(&response) != nil { // implicit 200
 		w.WriteHeader(500)
 		// implicit return
 	}
@@ -158,24 +154,22 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 
 /* GetPublicKey
  *
- * TODO: convert to get request with id as part of path
  */
 func GetPublicKey(w http.ResponseWriter, r *http.Request) {
-
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
-	if (r.Method != http.MethodPost){
+	if r.Method != http.MethodGet {
 		w.WriteHeader(400)
 		return
 	}
 
-	var clientData getPublicKeyData
-	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
+	id := r.URL.Path[len("/getpk/"):]
+	if !ValidateId(id) {
 		w.WriteHeader(400)
 		return
 	}
 
-	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.Id)
+	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, id)
 	if err != nil {
 		w.WriteHeader(404)
 		return
@@ -188,12 +182,12 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var responseData getPublicKeyResponse
-	if err := rows.Scan(&responseData.PubKey); err != nil {
+	if rows.Scan(&responseData.PubKey) != nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	if err:= json.NewEncoder(w).Encode(responseData); err != nil { // implicit 200
+	if json.NewEncoder(w).Encode(responseData) != nil { // implicit 200
 		w.WriteHeader(500)
 		// implicit return
 	}

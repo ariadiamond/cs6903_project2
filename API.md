@@ -43,7 +43,6 @@ Step 1:
 |400, 403, 404, 500|None|
 
 ## Get a public Key
-**The current implementation does not match this spec, and will be updated soon.**
 
 |Endpoint|/getpk/\<crypikID\>|
 |:-------|------------------:|
