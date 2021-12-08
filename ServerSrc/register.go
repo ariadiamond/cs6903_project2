@@ -141,7 +141,7 @@ func StoreSecret(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	// io write file
+	// io write to file
 	err := ioutil.WriteFile("UserKeys/" + serverData.id, sessionToken)
 
 	w.WriteHeader(200)
