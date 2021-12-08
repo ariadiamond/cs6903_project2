@@ -18,6 +18,11 @@ type createUserResponse struct {
 	sessionToken string `json:"sesssionToken"`
 }
 
+type StoreSecretData struct{
+	id string `json:"id"`
+	sessionToken string `json:"sessionToken"`
+}
+
 const (
 	ID_LEN = 4
 )
@@ -36,7 +41,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	
+
 	var data createUserData
 	if json.NewDecoder(r.Body).Decode(&data) != nil {
 		w.WriteHeader(400)
@@ -53,12 +58,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	// lock new user mutex
 	newUserMutex.Lock()
 	defer newUserMutex.Unlock() // with a successful execution, this unlocks late
-	
+
 	// get a new cryptikID
 	newByteID := make([]byte, ID_LEN >> 1)
 	var newID string
 	numRes := 1 // this needs to be outside of the for loop because we want to enter the loop
-	
+
 	for _, err := rand.Read(newByteID); numRes != 0; _, err = rand.Read(newByteID) {
 		if err != nil { // unable to generate randomness
 			w.WriteHeader(500)
@@ -72,7 +77,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer rows.Close()
-		
+
 		if !rows.Next() {
 			w.WriteHeader(500)
 			return
@@ -83,21 +88,21 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		rows.Close()
 	}
-	
+
 	if _, err := Jarvis.Exec(`INSERT INTO Users VALUES ($1, $2);`, newID, data.publicKey);
 		err != nil {
 		// What do we do? just fail?
 		w.WriteHeader(500)
 		return
 	}
-	
+
 	// Generate and add session token
 	sessionToken, err := AddSession(newID)
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-	
+
 	// Respond to Client
 	response := createUserResponse{
 		id:           newID,
@@ -119,4 +124,28 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
  */
 func StoreSecret(w http.ResponseWriter, r *http.Request) {
 
+	if (r.Method != http.MethodPost){
+		w.WriteHeader(400)
+		return
+	}
+
+	var serverData StoreSecretData
+	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
+		w.WriteHeader(400)
+		return
+	}
+
+	// check ID is valid
+    if !ValidateId(serverData.id) {
+        w.WriteHeader(400)
+        return
+    }
+
+	// io write file
+	err := ioutil.WriteFile("UserKeys/" + serverData.id, sessionToken)
+
+	w.WriteHeader(200)
+	if err := json.NewEncoder(w).Encode(serverData); err != nil {
+		w.WriteHeader(500)
+		return
 }
