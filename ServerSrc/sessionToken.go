@@ -37,13 +37,13 @@ func AddSession(id string) (string, error) {
 		return "", err
 	}
 	hexToken := hex.EncodeToString(token)
-	
+
 	tokenData := Token_t{
 		Id:      id,
 		Created: time.Now(),
 	}
 	SessionHolder[hexToken] = tokenData
-	
+
 	return hexToken, nil
 }
 
@@ -53,7 +53,7 @@ func AddSession(id string) (string, error) {
 func RemoveToken() {
 
 //	for ;; /* time.Sleep() */ { // infinite loop
-		
+
 //	}
 }
 
@@ -66,14 +66,14 @@ func AddNonce(id string) (string, error) {
 		return "", err
 	}
 	nonceHex := hex.EncodeToString(nonce)
-	
+
 	nonceHolder := Nonce_t{
 		Nonce:   nonceHex,
 		Created: time.Now(),
 	}
-	
+
 	NonceHolder[id] = nonceHolder
-	
+
 	return nonceHex, nil
 }
 
@@ -85,7 +85,11 @@ func GetNonce(id string) (string, bool) {
 	if !exist {
 		return "", false
 	}
-	// check that nonce has not expired
+	// TODO check that nonce has not expired
+
+	// time.now - nonceExper > nonce.Created
+		// >:( return false
+
 	return nonce.Nonce, true
 }
 
@@ -97,5 +101,6 @@ func DereferenceToken(token string) (string, bool) {
 	if !exist {
 		return "", false
 	}
+	// TODO check that nonce has not expired
 	return id.Id, true
 }
