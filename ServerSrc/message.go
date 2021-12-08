@@ -8,19 +8,19 @@ import (
 	"time"
 )
 
-type SendMessageData struct {
-	messageSent	string `json:"messageSent"`
-	sessionToken string `json:"sessionToken"`
-	channel	int `json:"channel"`
+type sendMessageData struct {
+	SessionToken string `json:"sessionToken"`
+	Channel	     int    `json:"channel"`
+	MessageSent	 string `json:"message"`
 }
 
-type GetMessagesData struct{
-	sessionToken string `json:"sessionToken"`
-	userTimestamp time.Time `json:"userTimestamp"`
+type getMessagesData struct{
+	SessionToken  string    `json:"sessionToken"`
+	UserTimestamp time.Time `json:"userTimestamp"`
 }
 
-type GetMessagesResponse struct {
-	messages []string `json:"messages"`
+type getMessagesResponse struct {
+	Messages []string `json:"messages"`
 }
 
 /* SendMessage sends messages to chats that have been initialized (someone has called NewChat and
@@ -41,21 +41,22 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode message sent to server
-	var serverData SendMessageData
+	var serverData sendMessageData
 	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
 		w.WriteHeader(400)
 		return
 	}
 
 	// Parse data and error check
-	id, exist := DereferenceToken(serverData.sessionToken)
+	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
 		return
 	}
 
  // Query database for active memebers in channel to verify
-	rows, err := Jarvis.Query(`SELECT members FROM channels WHERE channel = ? AND next = NULL;`, serverData.channel)
+	rows, err := Jarvis.Query(`SELECT members FROM channels WHERE channel = ? AND next = NULL;`,
+		serverData.Channel)
 	if err != nil {
 		w.WriteHeader(404)
 		return
@@ -82,9 +83,10 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 
 
 	// Insert new row into table with message sent
-	_, err = Jarvis.Exec(`INSERT INTO messages (channel, message) VALUES ($1, $2)`, serverData.channel, serverData.messageSent)
+	_, err = Jarvis.Exec(`INSERT INTO messages (channel, message) VALUES ($1, $2);`,
+		serverData.Channel, serverData.MessageSent)
 	if err != nil {
-		w.WriteHeader(404)
+		w.WriteHeader(500)
 		return
 	}
 
@@ -107,21 +109,22 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//
-	var serverData GetMessagesData
+	var serverData getMessagesData
 	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
 		w.WriteHeader(400)
 		return
 	}
 
 	// Parse data and error check
-	id, exist := DereferenceToken(serverData.sessionToken)
+	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
 		return
 	}
 
 	// Query database for any messages not yet recieved
- 	rows, err := Jarvis.Query(`SELECT message FROM messages WHERE channel in (SELECT channel FROM channels WHERE members LIKE $1) AND messageTimestamp > $2`, id, serverData.userTimestamp)
+ 	rows, err := Jarvis.Query(`SELECT message FROM messages WHERE channel in (SELECT channel FROM channels WHERE members LIKE $1) AND messageTimestamp > $2;`,
+ 		id, serverData.UserTimestamp)
  	if err != nil {
  		w.WriteHeader(404)
  		return
@@ -135,7 +138,7 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 
 	var message string
 
-	var response GetMessagesResponse
+	var response getMessagesResponse
 
 	// Iterate through returned messages
 	for ; rows.Next(); err = rows.Scan(&message) {
@@ -144,13 +147,12 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(400)
 			return
 		}
-		response.messages = append(response.messages, message)
+		response.Messages = append(response.Messages, message)
 	}
 
- 	// Return messages 
-	w.WriteHeader(200)
-	if err:= json.NewEncoder(w).Encode(response); err != nil {
+ 	// Return messages
+	if json.NewEncoder(w).Encode(response) != nil { // implicit 200
 		w.WriteHeader(500)
-		return
+		// implicit return
 	}
 }

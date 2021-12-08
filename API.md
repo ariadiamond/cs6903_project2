@@ -1,57 +1,46 @@
 # API
 
+---
 ## Account Creation
 
 Step 1:
 
 |Endpoint|/create|
 |:-------|------:|
-|Method  |GET    |
-
-Returns CryptikID temporary session cookie to set passsword
-
-Step 2:
-
-|Endpoint|/setpassword|
-|:-------|-----------:|
-|Method  |POST        |
-|Data    |<ul><li>password</li><li>session cookie</li></ul>|
+|Method  |POST   |
+|Data    |`publicKey` string|
 
 |Response Code|Data|
 |:------------|---:|
-|200          |<ul><li>CryptikID</li><li>Session token</li></ul>
-|400          |None|
-|500          |None|
+|200          |<ul><li>`id` 4 hex string</li><li>`sessionToken` 32 hex string</li></ul>|
+|400, 500     |None|
 
+---
 ## Authentication
-
-1. Client asks for challenge (by identifying themself)/gets challenge
-2. Client solves challenge and sends it?/gets session cookie
 
 **Step 1:**
 
 |Endpoint|/auth/1|
 |:-------|------:|
 |Method  |POST   |
-|Data    |id     |
+|Data    |`id` 4 hex string|
 
-|Reponse Code|Data|
-|:-----------|---:|
-|200         |Nonce, encrypted secret file|
-|400         |None|
-|404         |None|
+|Reponse Code |Data|
+|:------------|---:|
+|200          |<ul><li>`nonce` 32 hex string</li><li>`encryptedFile` base64 string</li></ul>|
+|400, 404, 500|None|
 
 **Step 2:**
 
 |Endpoint|/auth/2  |
 |:-------|--------:|
 |Method  |POST     |
-|Data    |challenge|
+|Data    |<ul><li>`id` 4 hex string</li><li>`nonce` 32 hex string</li><li>`signature` 78 base64 string</li></ul>|
 
-|Response Code|Data|
-|:------------|---:|
-|200          |Session token|
-|403          |None|
+|Response Code     |Data|
+|:-----------------|---:|
+|200               |`sessionToken` 32 hex string|
+|400, 403, 404, 500|None|
 
 ## Get a public Key
 
@@ -59,27 +48,69 @@ Step 2:
 |:-------|------------------:|
 |Method  |GET                |
 
-|Response Code|Data              |
-|:------------|-----------------:|
-|200          |Public Key of user|
-|404          |None              |
+|Response Code|Data           |
+|:------------|--------------:|
+|200          |`pubKey` string|
+|400,404,500  |None           |
 
+---
+## New Chat
+
+|Endpoint|/newChat|
+|:-------|-------:|
+|Method  |POST    |
+|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`members` list of 4 hex string</li><li>`g` bigInt</li><li>`p` bigInt</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
+
+|Response Code|Data         |
+|:------------|------------:|
+|200          |`channel` int|
+|400, 403, 500|None         |
+
+## Accept Chat
+
+|Endpoint|/acceptChat|
+|:-------|----------:|
+|Method  |POST       |
+|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`channel` int</li><li>`accept` boolean</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
+
+|Response Code     |Data|
+|:-----------------|---:|
+|200               |None|
+|400, 403, 404, 500|None|
+
+## Find Chat
+
+|Endpoint|/findChat|
+|:-------|--------:|
+|Method  |POST     |
+|Data    |`sessionToken` 32 hex string|
+
+|Response Code|Data|
+|:------------|---:|
+|200          |List of:<br><ul><li>`channel` int</li><li>`members` list of 4 hex string</li><li>`g` bigInt</li><li>`p` bigInt</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
+|400, 403, 500|None|
+
+---
 ## Send Message
 
 |Endpoint|/send|
 |:-------|----:|
 |Method  |POST |
-|Data    |<ul><li>To</li><li>Encrypted Message</li></ul>|
+|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`channel` int</li><li>`message` string</li></ul>|
 
-|Response Code|Meaning|
-|:------------|------:|
-|200          |Success|
-|403          |Not authenticated|
-|404          |Chat does not exist|
+|Response Code     |Data|
+|:-----------------|---:|
+|200               |None|
+|400, 403, 404, 500|None|
 
 ## Get Messages
 
 |Endpoint|/retrieve|
 |:-------|--------:|
-|Method  |GET      |
-|Data    |Cookie   |
+|Method  |POST     |
+|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`userTimestamp` timestamp</li></ul>|
+
+|Response Code|Data|
+|:------------|---:|
+|200          |`messages` list of string|
+|400, 404, 500|None|

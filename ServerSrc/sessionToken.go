@@ -7,12 +7,12 @@ import (
 )
 
 type Token_t struct {
-	id      string
-	created time.Time
+	Id      string
+	Created time.Time
 }
 type Nonce_t struct {
-	nonce   string
-	created time.Time
+	Nonce   string
+	Created time.Time
 }
 
 const (
@@ -39,8 +39,8 @@ func AddSession(id string) (string, error) {
 	hexToken := hex.EncodeToString(token)
 	
 	tokenData := Token_t{
-		id:      id,
-		created: time.Now(),
+		Id:      id,
+		Created: time.Now(),
 	}
 	SessionHolder[hexToken] = tokenData
 	
@@ -68,8 +68,8 @@ func AddNonce(id string) (string, error) {
 	nonceHex := hex.EncodeToString(nonce)
 	
 	nonceHolder := Nonce_t{
-		nonce:   nonceHex,
-		created: time.Now(),
+		Nonce:   nonceHex,
+		Created: time.Now(),
 	}
 	
 	NonceHolder[id] = nonceHolder
@@ -86,7 +86,7 @@ func GetNonce(id string) (string, bool) {
 		return "", false
 	}
 	// check that nonce has not expired
-	return nonce.nonce, true
+	return nonce.Nonce, true
 }
 
 func DereferenceToken(token string) (string, bool) {
@@ -97,5 +97,5 @@ func DereferenceToken(token string) (string, bool) {
 	if !exist {
 		return "", false
 	}
-	return id.id, true
+	return id.Id, true
 }
