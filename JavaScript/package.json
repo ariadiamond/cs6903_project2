@@ -33,7 +33,8 @@
         "ignoreStrings": true
       }],
       "prefer-const": "warn",
-      "no-extra-parens": "error"
+      "no-extra-parens": "error",
+      "no-warning-comments": ["error", {"terms": ["TODO", "FIXME"]}] 
     }
   }
 }

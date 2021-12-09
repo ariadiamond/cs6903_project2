@@ -50,7 +50,7 @@ export async function auth() {
   try {
     resp = await fetch("/auth/2", {
       method: "POST",
-      body: JSON.stringify({"id": id, "nonce": nonce, "signature": signature})
+      body: JSON.stringify({id: id, nonce: nonce, signature: signature})
     });
   } catch(e) {
     return errAuth.Auth2;
