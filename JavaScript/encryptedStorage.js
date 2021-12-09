@@ -1,5 +1,4 @@
-
-export const errEncryptedStore = {
+const errEncryptedStore = {
   NoDecryptObj:       1,
   ChanNotInitialized: 2,
   NoKey:              3,
@@ -10,9 +9,14 @@ export const errEncryptedStore = {
 };
 
 
-/* decryptData
- * 16 byte salt
- * 96 bit iv
+/* decryptData takes the encrypted data stored on the server (or locally) and
+ * decrypts it to make it available through the encryptedStore API. it takes a:
+ *   - 96 bit iv, which is stored on the server with the encrypted data
+ *   - 16 byte salt, which is stored with the iv on the server and used to
+ *     prevent rainbow table attacks
+ *   - encrypted data, which was previously encrypted by a client and stored on
+ *     on the server
+ *   - password, entered by the user and used to decrypt the data
  */
 async function decryptData(iv, salt, encryptedData, password) {
   const forDeriveKey = await crypto.subtle.importKey(
@@ -45,7 +49,7 @@ async function decryptData(iv, salt, encryptedData, password) {
   return 0;
 }
 
-/*
+/* getPrivKey gets the ed25519 private key used for signatures.
  */
 function getPrivKey() {
   // get and check for decryptObj
@@ -62,7 +66,10 @@ function getPrivKey() {
   return privKey;  
 }
 
-
+/* getKey gets the key object given a provided channel. This can return either
+ * the data used for key derivation if the channel has not been initialized, or
+ * a CryptoKey with the AES-GCM key if the channel has been initialized.
+ */
 function getKey(channel) {
   const decryptObj = sessionStorage.getItem("decryptObj");
   if (decryptObj == null) {
@@ -76,6 +83,9 @@ function getKey(channel) {
   return key;
 }
 
+/* getClock returns the vector clock for the channel, provided the channel
+ * exists and has been fully initialized (we have the shared key).
+ */
 function getClock(channel) {
   const decryptObj = sessionStorage.getItem("decryptObj");
   if (decryptObj == null) {
@@ -97,37 +107,61 @@ function getClock(channel) {
   return decryptObj.channel.clock;
 }
 
-// TODO ensure that there are no conflicts with load-update-store operations
+/* setKey stores the keyObj at the particular channel, adding the channel if
+ * necessary, as well as the clock if the channel has been fully initialized.
+ *
+ * TODO ensure that there are no conflicts with load-update-store operations
+ */
 function setKey(channel, keyObj) {
   var decryptObj = sessionStorage.getItem("decryptObj");
   if (decryptObj == null) {
     return errEncryptedStore.NoDecryptObj;
   }
   
-  if (decryptObj?.channel == null) {
-    return errEncryptedStore.ChanNotInitialized;
+  if (decryptObj?.channel == null) { // initialize channel
+    decryptObj.channel = new Object();
   }
+  if (keyObj?.g == null && decryptObj.channel?.clock == null) { // init clock
+    decryptObj.channel.clock = new Array();
+  }
+  
   decryptObj.channel.key = keyObj;
   sessionStorage.setItm("decryptObj", decryptObj);
   return 0;
 }
 
+/* setClock updates the clock of the channel, provided it exists and has been
+ * fully initialized (a shared key exists)
+ *
 // TODO ensure that there are no conflicts with load-update-store operations
+ */
 function setClock(channel, clockObj) {
   var decryptObj = sessionStorage.getItem("decryptObj");
   if (decryptObj == null) {
     return errEncryptedStore.NoDecryptObj;
   }
   
-  if (decryptObj?.channel?.key == null) {
+  if (decryptObj[channel]?.key == null) {
+    return errEncryptedStore.ChanNotInitialized;
+  }
+  if (decryptObj[channel].key?.g != null) {
     return errEncryptedStore.ChanNotInitialized;
   }
   
-  decryptObj.channel.clock = clockObj;
+  decryptObj[channel].clock = clockObj;
   sessionStorage.setItem("decryptObj", decryptObj);
   return 0;
 }
 
+/* storeWithServer creates a new iv and encrypts the secret keys associated with
+ * the Cryptik ID, then stores it on the server, allowing access to account from
+ * any computer or after signing out without requiring external data to be kept
+ * by the client. Since the data is encrypted with AES256-GCM, it is infeasible
+ * to expect an attacker to break the encryption (unless a poor password is
+ * chosen).
+ *
+ * TODO store salt on server too?
+ */
 async function storeWithServer() {
   const key        = sessionStorage.getItem("pbKey");
   const decryptObj = sessionStorage.getItem("decryptObj");
@@ -170,7 +204,11 @@ async function storeWithServer() {
   }
 }
 
+/* encryptedStore is an object that holds the functions implemented, as well as
+ * "err", which holds the error codes from the functions.
+ */
 export const encryptedStore = {
+  err:             errEncryptedStore,
   decryptData:     decryptData,
   getPrivKey:      getPrivKey,
   getKey:          getKey,
