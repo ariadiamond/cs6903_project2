@@ -52,9 +52,24 @@ func AddSession(id string) (string, error) {
  */
 func RemoveToken() {
 
-//	for ;; /* time.Sleep() */ { // infinite loop
+// Infinite  loop, checks every hour
+for ;; time.Sleep(time.Hour()) {
+	// Iterate through Nonces to check if any have expired
+	for _, key := range(NonceHolder.Keys){
+		value, _ := NonceHolder[key]
+		if time.Now() - NONCE_EXPIRATION > value.Created {
+			delete(NonceHolder, key)
+			}
+		}
 
-//	}
+	// Iterate through the Session Tokens to check if any have expired
+	for _, key := range(SessionHolder.Keys) {
+		value, _ := SessionHolder[key]
+		if time.Now() - TOKEN_EXPIRATION > value.Created {
+			delete(SessionHolder, key)
+			}
+		}
+	}
 }
 
 /* AddNonce generates a nonce and stores it in the NonceHolder map, returing the nonce to the
@@ -85,11 +100,10 @@ func GetNonce(id string) (string, bool) {
 	if !exist {
 		return "", false
 	}
-	// TODO check that nonce has not expired
-
-	// time.now - nonceExper > nonce.Created
-		// >:( return false
-
+	// Check that nonce has not expired
+	if time.Now() - NONCE_EXPIRATION > nonce.Created {
+			return "", false
+		}
 	return nonce.Nonce, true
 }
 
@@ -101,6 +115,9 @@ func DereferenceToken(token string) (string, bool) {
 	if !exist {
 		return "", false
 	}
-	// TODO check that nonce has not expired
+	// Check that session Token has not expired
+	if time.Now() - TOKEN_EXPIRATION > id.Created {
+		return "", false
+		}
 	return id.Id, true
 }

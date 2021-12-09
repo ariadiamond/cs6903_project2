@@ -40,12 +40,12 @@ func main() {
 	} else {
 		debug = false
 	}
-
+ 	go RemoveToken() // Multi-thread call for RemoveToken
 	// call function to initialize connection with Jarvis
 	connectToDB()
 	// Create a server variable so we can do clean shutdowns
 	srv := http.Server{ Addr: ":" + strconv.Itoa(*port) }
-	
+
 	// Register Handlers (using default serve mux)
 	// register.go
 	http.HandleFunc("/create", CreateUser)
@@ -61,7 +61,7 @@ func main() {
 	// message.go
 	http.HandleFunc("/send",     SendMessage)
 	http.HandleFunc("/retrieve", GetMessages)
-	
+
 	// Run server
 	// If DEBUG set, allow for HTTP (instead of HTTPS)
 	if debug && *insecure {

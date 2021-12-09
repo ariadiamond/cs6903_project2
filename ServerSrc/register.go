@@ -154,8 +154,7 @@ func StoreSecret(w http.ResponseWriter, r *http.Request) {
 		 return
 	 }
 
-	if json.NewEncoder(w).Encode(serverData) != nil { // implicit 200
-		w.WriteHeader(500)
+	w.WriteHeader(200)
 		// implicit returns
 	}
 }
