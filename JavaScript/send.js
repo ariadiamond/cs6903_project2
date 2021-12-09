@@ -1,12 +1,11 @@
 // my imports
-import { Validate }     from 'validate.js';
-import { encryptStore } from 'encryptedStorage.js';
+import { encryptedStore } from "encryptedStorage.js";
 
 // imports to external libraries
-import * as ed25519 from 'noble-ed25519.js';
+import * as ed25519 from "noble-ed25519.js";
 
 // errors possible from sendMessage
-export const errSend {
+export const errSend = {
   NoToken:   1,
   NoKey:     2,
   FetchFail: 3,
@@ -20,7 +19,7 @@ export const errSend {
  */
 export async function sendMessage(channel, message) {
   var token = localStorage.getItem("token");
-  if token == null {
+  if (token == null) {
     return errSend.NoToken;
   }
     
@@ -28,7 +27,7 @@ export async function sendMessage(channel, message) {
   
   // encrypt message + vc
   var encData = await encrypt(channel, vectorClock, message);
-  if (typeof(encData) === "number") { // check if we had an error
+  if (typeof encData === "number") { // check if we had an error
     return encData;
   }
   var {iv, encryptedData} = encData; // destructure data from correct execution
@@ -38,13 +37,14 @@ export async function sendMessage(channel, message) {
   
   // do actual fetch call (send data to server)
   try {
-    const resp = await fetch("/send", {
+    var resp = await fetch("/send", {
       method: "POST",
-      body: JSON.stringify({"sessionToken": token,
-                            "channel":      channel,
-                            "iv":           iv,
-                            "message":      encryptedData,
-                            "signature:"    signature
+      body: JSON.stringify({
+        "sessionToken": token,
+        "channel":      channel,
+        "iv":           iv,
+        "message":      encryptedData,
+        "signature":    signature
       })
     });
   } catch(e) {
@@ -72,15 +72,15 @@ export async function sendMessage(channel, message) {
 async function encrypt(channel, vectorClock, message) {
   // Get the channel key type CryptoKey if it exists, or null if none exists.
   // In the case of no channel key, we return a number error.
-  const channelKey = encryptStore.getKey(channel);
-  if channelKey == null {
+  const channelKey = encryptedStore.getKey(channel);
+  if (channelKey == null) {
     return errSend.NoKey;
   }
   
   // generate an iv
   var iv = window.crypto.getRandomValues(new Uint8Array(96 >> 3));
   // generate the gcm object
-  const gcmObj {
+  const gcmObj = {
     name: "AES-GCM",
     iv:   iv
   };
@@ -88,16 +88,17 @@ async function encrypt(channel, vectorClock, message) {
   // convert the message and vector clock into data that can be encrypted.
   // first it converts it to a JSON object, then into an array and finally
   // mutates it into ascii character codes
-  const plaintext = Array.from(JSON.stringify({"vectorClock": vectorClock,
-                                               "message":     message
-    )).map(d => d.charCodeAt(0));
+  const plaintext = Array.from(JSON.stringify({
+    "vectorClock": vectorClock,
+    "message":     message
+  })).map(d => d.charCodeAt(0));
   
   // do the actual encryption
   const encryptData = await window.crypto.subtle.encrypt(gcmObj,
     channelKey, plaintext);
   
   // convert the data to base64 and return it
-  return {window.btoa(iv), window.btoa(encryptData)}; // encode binary in base64
+  return {"iv": btoa(iv), "encryptedData": btoa(encryptData)}; // encode binary in base64
 
 }
 
@@ -112,13 +113,17 @@ async function sign(channel, iv, encryptedData) {
   // encode all data into a JSON object and convert it to an array of ints based
   // on the ascii character codes.
   var messageData = Array.from(
-    JSON.stringify({"from":    localStorage.getItem("id"),
-                    "channel": channel,
-                    "iv":      iv,
-                    "message": encryptedData
+    JSON.stringify({
+      "from":    localStorage.getItem("id"),
+      "channel": channel,
+      "iv":      iv,
+      "message": encryptedData
     })).map(d => d.charCodeAt(0));
   // hash and sign message
-  var msgHash   = await window.crypto.subtle.digest('SHA-256', messageData);
+  var msgHash   = await window.crypto.subtle.digest("SHA-256", messageData);
+  
+  // get privKey
+  const privKey = localStorage.getItem("privKey");
   var signature = await ed25519.sign(msgHash, privKey);
   return signature;
 }

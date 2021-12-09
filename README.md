@@ -22,6 +22,7 @@ This has not been written yet, so it does not do anything.
 - [MDN: Regular Expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/RegExp)
 - [MDN: export](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export)
 - [MDN: fetch()](https://developer.mozilla.org/en-US/docs/Web/API/fetch)
+- [ESlint](https://eslint.org) for linting JavaScript code
 
 #### Libaries
 - [noble-ed25519](https://github.com/paulmillr/noble-ed25519)

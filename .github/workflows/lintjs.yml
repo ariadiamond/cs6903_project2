@@ -1,0 +1,24 @@
+name: Code Style
+on:
+  push:
+    paths:
+      - '**.js'
+permissions:
+  contents: read
+
+jobs:
+  lint-js:
+    name: Lint JavaScript Code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: JavaScript
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - run: npm install
+      - run: npx eslint **.js
+        

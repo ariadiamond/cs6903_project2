@@ -1,7 +1,7 @@
-import { Validate } from 'validate.js';
-import * as ed25519 from 'noble-ed25519.js';
+import { Validate } from "validate.js";
+import * as ed25519 from "noble-ed25519.js";
 
-export const errAuth {
+export const errAuth = {
   Id:         1,
   Auth1:      2,
   InvalNonce: 3,
@@ -13,9 +13,9 @@ export const errAuth {
 };
 
 export async function auth() {
-  const id = localStorage.getItem('id');
+  const id = localStorage.getItem("id");
   if (id == null) {
-    return errors.Id;
+    return errAuth.Id;
   }
   
   /* auth step 1 */
@@ -32,7 +32,7 @@ export async function auth() {
     case 200:
       var json  = await resp.json();
       var nonce = json.nonce;
-      var encryptedFile = json.encrytedFile;
+      //var encryptedFile = json.encryptedFile; // TODO parse
       if (!Validate.ValidateNonce(nonce)) {
         return errAuth.InvalNonce;
       }
@@ -44,13 +44,13 @@ export async function auth() {
   }
   
   // TODO get private key
-  const privKey = localStorage.getItem('privKey');
+  const privKey = localStorage.getItem("privKey");
   const signature = await ed25519.sign(nonce, privKey);
   
   try {
     resp = await fetch("/auth/2", {
       method: "POST",
-      body: JSON.stringify({"id", id, "nonce", nonce, "signature": signature})
+      body: JSON.stringify({"id": id, "nonce": nonce, "signature": signature})
     });
   } catch(e) {
     return errAuth.Auth2;
@@ -62,7 +62,7 @@ export async function auth() {
       if (!Validate.ValidateToken(token)) {
         return errAuth.InvalToken;
       }
-      localStorage.setItem('token', token);
+      localStorage.setItem("token", token);
       break;
     case 403:
       return errAuth.WrongSig;
@@ -81,5 +81,5 @@ export function getPK(id) {
       }
       return response.json().pubKey;
     })
-    .catch(e => false);
+    .catch(false);
 }
