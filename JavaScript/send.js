@@ -98,7 +98,7 @@ async function encrypt(channel, vectorClock, message) {
     channelKey, plaintext);
   
   // convert the data to base64 and return it
-  return {"iv": btoa(iv), "encryptedData": btoa(encryptData)}; // encode binary in base64
+  return {"iv": iv, "encryptedData": encryptData}; // encode binary in base64
 
 }
 

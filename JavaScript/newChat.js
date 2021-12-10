@@ -1,11 +1,13 @@
-import { encryptedStore } from 'encryptedStorage.js';
-import * as ed25519 from 'noble-ed25519.js';
+import { encryptedStore } from "encryptedStorage.js";
+import * as ed25519 from "noble-ed25519.js";
 
 const errNewChat = {
-  EAuth: 1,
+  EAuth:     1,
   FetchFail: 2,
-  ServerErr: 3
+  ServerErr: 3,
+  NExist:    4
 };
+
 
 async function createChat(members) {
   const token = localStorage.getItem("token");
@@ -13,14 +15,16 @@ async function createChat(members) {
     return errNewChat.EAuth;
   }
   
-  const p = getBigPrime();
-  const g = getG(p);
+  const p = num.getBigPrime();
+  const g = num.getG();
   
-  const x = getx();
+  const x = num.getx();
   
   const exps = ["a:" + x];
   
-  const signature = sign(p, g, exps);
+  const msg = Array.from(JSON.stringify({p: p, g: g, exponents: exps})
+    .map(d => d.charCodeAt(0)));
+  const signature = sign(msg);
   
   try {
     var response = await fetch("/newChat", {
@@ -53,16 +57,62 @@ async function createChat(members) {
   }
 }
 
-async function sign(p, g, exps) {
+async function acceptChat(channel, accept, members) {
+  var token = localStorage.getItem("token");
+  if (token == null) {
+    return errNewChat.EAuth;
+  }
+  var body;
+  if (accept) {
+    // TODO exponents
+    // for exp in exps
+    //   exp = exp ^ x mod p
+    // exps += g ^ x mod p
+    
+  } else { // we are not joining the chat
+    const msg = JSON.stringify({
+      id: localStorage.getItem("id"),
+      accept: false,
+      channel: channel
+    });
+    const signature = sign(msg);
+    body = JSON.stringify({
+      sessionToken: token,
+      exponents: [""],
+      signature: signature
+    });
+  }
+  
+  try {
+    var response = await fetch("/acceptChat", {
+      method: "POST",
+      body: body
+    });
+  } catch(e) {
+    return errNewChat.FetchFail;
+  }
+  switch (response.status) {
+    case 200:
+      return 0;
+    case 403:
+      return errNewChat.EAuth;
+    case 404:
+      return errNewChat.NExist;
+    default:
+      return errNewChat.ServerErr;
+  }
+}
+
+
+async function sign(msg) {
   const privKey = encryptedStore.getPrivKey();
-  const msg = Array.from(JSON.stringify({p: p, g: g, exponents: exps})
-    .map(d => d.charCodeAt(0)));
   const msgHash = await crypto.subtle.digest("SHA-256", msg);
   const signature = await ed25519.sign(msgHash, privKey);
-  return btoa(signature);
+  return btoa(signature.toString());
 }
 
 export const newChat = {
   errNewChat: errNewChat,
-  createChat: createChat  
+  createChat: createChat,
+  acceptChat: acceptChat  
 };

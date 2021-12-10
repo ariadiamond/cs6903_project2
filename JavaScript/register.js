@@ -9,7 +9,7 @@ import * as ed25519 from "noble-ed25519.js"; // TODO remote host
 export async function setup() {
   const privKey = ed25519.utils.randomPrivateKey();
   const pubKey  = await ed25519.getPublicKey(privKey);
-  localStorage.setItem("privKey", privKey);
+  encryptedStore.init(privKey);
   return pubKey;
 }
 

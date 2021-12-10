@@ -1,3 +1,5 @@
+import { vectorClock } from "vectorClock.js";
+
 const errEncryptedStore = {
   NoDecryptObj:       1,
   ChanNotInitialized: 2,
@@ -8,6 +10,14 @@ const errEncryptedStore = {
   ServerErr:          7
 };
 
+function init(privKey) {
+  var decryptObj = {
+    privKey:   privKey,
+    timestamp: Date.Now()
+  }
+  
+  sessionStorage.setItem("decryptObj", decryptObj)
+}
 
 /* decryptData takes the encrypted data stored on the server (or locally) and
  * decrypts it to make it available through the encryptedStore API. it takes a:
@@ -30,7 +40,7 @@ async function decryptData(iv, salt, encryptedData, password) {
       name: "PBKDF2", 
       hash: "SHA-256", 
       salt: Array.from(salt.map(d => d.charCodeAt(0))), 
-      iterations: 1000
+      iterations: 1 << 20 // big number
     },
     forDeriveKey,
     {name: "AES-GCM", length: 256},
@@ -107,6 +117,15 @@ function getClock(channel) {
   return decryptObj.channel.clock;
 }
 
+function getTimestamp() {
+  var decryptObj = sessionStorage.getItem("decryptObj");
+  if (decryptObj == null) {
+    return errEncryptedStore.NoDecryptObj;
+  }
+  return decryptObj.timestamp;
+}
+
+
 /* setKey stores the keyObj at the particular channel, adding the channel if
  * necessary, as well as the clock if the channel has been fully initialized.
  *
@@ -121,9 +140,8 @@ function setKey(channel, keyObj) {
   if (decryptObj?.channel == null) { // initialize channel
     decryptObj.channel = new Object();
   }
-  if (keyObj?.g == null && decryptObj.channel?.clock == null) { // init clock
-    decryptObj.channel.clock = new Array();
-  }
+  // init clock
+  vectorClock.initChannel(channel, members);
   
   decryptObj.channel.key = keyObj;
   sessionStorage.setItm("decryptObj", decryptObj);
@@ -151,6 +169,15 @@ function setClock(channel, clockObj) {
   decryptObj[channel].clock = clockObj;
   sessionStorage.setItem("decryptObj", decryptObj);
   return 0;
+}
+
+function setTimestamp(timestamp) {
+  var decryptObj = sessionStorage.getItem("decryptObj");
+  if (decryptObj == null) {
+    return errEncryptedStore.NoDecryptObj;
+  }
+  decryptObj.timestamp = timestamp;
+  sessionStorage.setItem("decryptObj", decryptObj);
 }
 
 /* storeWithServer creates a new iv and encrypts the secret keys associated with
@@ -209,11 +236,14 @@ async function storeWithServer() {
  */
 export const encryptedStore = {
   err:             errEncryptedStore,
+  init:            init,
   decryptData:     decryptData,
   getPrivKey:      getPrivKey,
   getKey:          getKey,
   getClock:        getClock,
+  getTimestamp:    getTimestamp,
   setKey:          setKey,
   setClock:        setClock,
+  setTimestamp:    setTimestamp,
   storeWithServer: storeWithServer
 };
