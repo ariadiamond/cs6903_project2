@@ -1,5 +1,3 @@
-import { vectorClock } from "vectorClock.js";
-
 const errEncryptedStore = {
   NoDecryptObj:       1,
   ChanNotInitialized: 2,
@@ -93,30 +91,6 @@ function getKey(channel) {
   return key;
 }
 
-/* getClock returns the vector clock for the channel, provided the channel
- * exists and has been fully initialized (we have the shared key).
- */
-function getClock(channel) {
-  const decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
-    errEncryptedStore.NoDecryptObj;
-  }
-  
-  const key = decryptObj[channel]?.key;
-  if (key == null) {
-    return errEncryptedStore.ChanNotInitialized;
-  }
-  
-  // if we have created/joined the channel, but it has not been fully
-  // initialized in that we have not derived the shared key
-  if (key?.g != null) {
-    return errEncryptedStore.ChanNotInitialized;
-  }
-  
-  // this should not fail
-  return decryptObj.channel.clock;
-}
-
 function getTimestamp() {
   var decryptObj = sessionStorage.getItem("decryptObj");
   if (decryptObj == null) {
@@ -140,34 +114,9 @@ function setKey(channel, keyObj) {
   if (decryptObj?.channel == null) { // initialize channel
     decryptObj.channel = new Object();
   }
-  // init clock
-  vectorClock.initChannel(channel, members);
   
   decryptObj.channel.key = keyObj;
   sessionStorage.setItm("decryptObj", decryptObj);
-  return 0;
-}
-
-/* setClock updates the clock of the channel, provided it exists and has been
- * fully initialized (a shared key exists)
- *
-// TODO ensure that there are no conflicts with load-update-store operations
- */
-function setClock(channel, clockObj) {
-  var decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
-    return errEncryptedStore.NoDecryptObj;
-  }
-  
-  if (decryptObj[channel]?.key == null) {
-    return errEncryptedStore.ChanNotInitialized;
-  }
-  if (decryptObj[channel].key?.g != null) {
-    return errEncryptedStore.ChanNotInitialized;
-  }
-  
-  decryptObj[channel].clock = clockObj;
-  sessionStorage.setItem("decryptObj", decryptObj);
   return 0;
 }
 
@@ -240,10 +189,8 @@ export const encryptedStore = {
   decryptData:     decryptData,
   getPrivKey:      getPrivKey,
   getKey:          getKey,
-  getClock:        getClock,
   getTimestamp:    getTimestamp,
   setKey:          setKey,
-  setClock:        setClock,
   setTimestamp:    setTimestamp,
   storeWithServer: storeWithServer
 };

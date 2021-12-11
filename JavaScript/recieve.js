@@ -1,4 +1,5 @@
 import { encryptedStore } from "encryptedStorage.js";
+import { vectorClock } from "vectorClock.js";
 import * as ed25519 from "noble-ed25519.js";
 
 const errRecv = {
@@ -56,7 +57,7 @@ async function recieveMessages() {
     }
     vectorClock.deliver(
       message.from,
-      channel,
+      message.channel,
       data.vectorClock,
       data.message);
   }

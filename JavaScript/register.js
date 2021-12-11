@@ -1,4 +1,5 @@
 import { Validate } from "validate.js";
+import { encryptedStore } from "encryptedStorage.js";
 import * as ed25519 from "noble-ed25519.js"; // TODO remote host
 // https://github.com/paulmillr/noble-ed25519/releases/download/1.3.0/noble-ed25519.js
 
