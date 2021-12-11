@@ -1,6 +1,6 @@
 import { Validate } from "validate.js";
 import { encryptedStore } from "encryptedStorage.js";
-import * as ed25519 from "noble-ed25519.js"; // TODO remote host
+import * as ed25519 from "noble-ed25519.js";
 // https://github.com/paulmillr/noble-ed25519/releases/download/1.3.0/noble-ed25519.js
 
 /* setup creates a public private ed25519 key pair for verification of identity

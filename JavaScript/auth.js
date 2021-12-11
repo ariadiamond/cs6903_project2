@@ -1,4 +1,5 @@
 import { Validate } from "validate.js";
+import { encryptedStore } from "encryptedStorage.js";
 import * as ed25519 from "noble-ed25519.js";
 
 export const errAuth = {
@@ -12,7 +13,7 @@ export const errAuth = {
   NoNonce:    8
 };
 
-export async function auth() {
+export async function auth(password) {
   const id = localStorage.getItem("id");
   if (id == null) {
     return errAuth.Id;
@@ -32,7 +33,11 @@ export async function auth() {
     case 200:
       var json  = await resp.json();
       var nonce = json.nonce;
-      //var encryptedFile = json.encryptedFile; // TODO parse
+      encryptedStore.decryptData(
+        json.iv,
+        json.salt,
+        json.encryptedFile,
+        password);
       if (!Validate.ValidateNonce(nonce)) {
         return errAuth.InvalNonce;
       }
@@ -43,8 +48,7 @@ export async function auth() {
       return errAuth.ServerErr;
   }
   
-  // TODO get private key
-  const privKey = localStorage.getItem("privKey");
+  const privKey = encryptedStore.getPrivKey();
   const signature = await ed25519.sign(nonce, privKey);
   
   try {

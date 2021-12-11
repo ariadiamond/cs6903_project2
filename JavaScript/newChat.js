@@ -1,4 +1,6 @@
 import { encryptedStore } from "encryptedStorage.js";
+import { vectorClock } from "vectorClock.js";
+import { num } from "num.js";
 import * as ed25519 from "noble-ed25519.js";
 
 const errNewChat = {
@@ -14,16 +16,21 @@ async function createChat(members) {
   if (token == null) {
     return errNewChat.EAuth;
   }
+  var key = {
+    p: num.getP(),
+    g: num.getG(),
+    x: num.getx()
+  };
   
-  const p = num.getBigPrime();
-  const g = num.getG();
+  const exps = [num.modExp(key.g, key.x, key.p)];
   
-  const x = num.getx();
-  
-  const exps = ["a:" + x];
-  
-  const msg = Array.from(JSON.stringify({p: p, g: g, exponents: exps})
-    .map(d => d.charCodeAt(0)));
+  const msg = Array.from(JSON.stringify({
+    from: localStorage.getItem("id"),
+    members: members,
+    p: key.p,
+    g: key.g,
+    exponents: exps
+  }).map(d => d.charCodeAt(0)));
   const signature = sign(msg);
   
   try {
@@ -32,8 +39,8 @@ async function createChat(members) {
       body: JSON.stringify({
         sessionToken: token,
         members: members,
-        g: g,
-        p: p,
+        g: key.g,
+        p: key.p,
         exponents: exps,
         signature: signature}) 
     });
@@ -48,7 +55,7 @@ async function createChat(members) {
       } catch(e) {
         return errNewChat.ServerErr;
       }
-      encryptedStore.setKey(channel, {g: g, p: p, exponents: exps})
+      encryptedStore.setKey(channel, key);
       return 0;
     case 403:
       return errNewChat.EAuth;
@@ -57,18 +64,40 @@ async function createChat(members) {
   }
 }
 
-async function acceptChat(channel, accept, members) {
+async function acceptChat(channel, accept, chan) {
   var token = localStorage.getItem("token");
   if (token == null) {
     return errNewChat.EAuth;
   }
   var body;
   if (accept) {
-    // TODO exponents
-    // for exp in exps
-    //   exp = exp ^ x mod p
-    // exps += g ^ x mod p
-    
+    // setKey
+    var key = {
+      g: chan.g,
+      p: chan.p,
+      x: num.getX()
+    };
+    encryptedStore.setKey(channel, key);
+    vectorClock.initChannel(channel, chan.members)
+    var newExps = new Array();
+    for (const exponent of channel.exponents) {
+      newExps.append(num.modExp(BigInt(exponent), key.x, chan.p).toString());
+    }
+
+    const signature = await sign(JSON.stringify({
+      from:      localStorage.getItem("id"),
+      members:   chan.members,
+      g:         chan.g,
+      p:         chan.p,
+      exponents: newExps
+    }));
+    body = JSON.stringify({
+      sessionToken: token,
+      channel:      channel,
+      accept:       true,
+      exponents:    newExps,
+      signature:    signature
+    });
   } else { // we are not joining the chat
     const msg = JSON.stringify({
       id: localStorage.getItem("id"),
