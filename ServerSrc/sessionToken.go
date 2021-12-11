@@ -52,24 +52,22 @@ func AddSession(id string) (string, error) {
  */
 func RemoveToken() {
 
-// Infinite  loop, checks every hour
-for ;; time.Sleep(time.Hour()) {
-	// Iterate through Nonces to check if any have expired
-	for _, key := range(NonceHolder.Keys){
-		value, _ := NonceHolder[key]
-		if if time.Now().After(value.Created.Add(NONCE_EXPIRATION)) {
-			delete(NonceHolder, key)
+	// Infinite  loop, checks every hour
+	for ;; time.Sleep(time.Hour) {
+		// Iterate through Nonces to check if any have expired
+		for key, value := range(NonceHolder) {
+			if time.Now().After(value.Created.Add(NONCE_EXPIRATION)) {
+				delete(NonceHolder, key)
 			}
 		}
 
-	// Iterate through the Session Tokens to check if any have expired
-	for _, key := range(SessionHolder.Keys) {
-		value, _ := SessionHolder[key]
-		if if time.Now().After(value.Created.Add(TOKEN_EXPIRATION)) {
-			delete(SessionHolder, key)
+		// Iterate through the Session Tokens to check if any have expired
+		for key, value := range(SessionHolder) {
+			if time.Now().After(value.Created.Add(TOKEN_EXPIRATION)) {
+				delete(SessionHolder, key)
 			}
 		}
-	}
+	} // end external for
 }
 
 /* AddNonce generates a nonce and stores it in the NonceHolder map, returing the nonce to the

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"sync"
 )
@@ -125,7 +126,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
  */
 func StoreSecret(w http.ResponseWriter, r *http.Request) {
 
-	if (r.Method != http.MethodPost){
+	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
 		return
 	}
@@ -155,6 +156,4 @@ func StoreSecret(w http.ResponseWriter, r *http.Request) {
 	 }
 
 	w.WriteHeader(200)
-		// implicit returns
-	}
 }

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"flag"
 	_ "github.com/lib/pq"
-	"log"
 	"net/http"
 	"strconv"
 	"os"
@@ -25,10 +24,10 @@ func connectToDB() {
 	connStr := "user=postgres dbname=postgres password=unused"
 	Jarvis, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		Fatal(err.Error(), 1)
 	}
 	if err = Jarvis.Ping(); err != nil {
-		log.Fatal(err)
+		Fatal(err.Error(), 1)
 	}
 }
 
@@ -65,8 +64,8 @@ func main() {
 	// Run server
 	// If DEBUG set, allow for HTTP (instead of HTTPS)
 	if debug && *insecure {
-		log.Fatal(srv.ListenAndServe())
+		Fatal(srv.ListenAndServe().Error(), 1)
 	} else {
-		log.Fatal(srv.ListenAndServeTLS("./cert.pem", "./key.pem"))
+		Fatal(srv.ListenAndServeTLS("./cert.pem", "./key.pem").Error(), 1)
 	}
 }

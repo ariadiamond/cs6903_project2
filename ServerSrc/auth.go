@@ -48,7 +48,6 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	var clientData authStep1Data
 	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
-		log.Fatal(err)
 		return
 	}
 
