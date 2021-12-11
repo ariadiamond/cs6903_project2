@@ -14,6 +14,7 @@ type authStep1Data struct {
 
 type authStep1Response struct {
 	Nonce string `json:"nonce"`
+	Iv    string `json:"iv"`
 	File  []byte `json:"encryptedFile"`
 }
 
@@ -72,10 +73,27 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
+	
+	rows, err := Jarvis.Query(`SELECT iv FROM Users WHERE id = $1;`, clientData.Id)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		w.WriteHeader(500)
+		return
+	}
+	var iv string
+	if rows.Scan(&iv) != nil {
+		w.WriteHeader(500)
+		return
+	}
 
 	// send back response
 	response := authStep1Response{
 		Nonce: nonce,
+		Iv:    iv,
 		File:  encryptedData,
 	}
 
