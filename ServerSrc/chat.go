@@ -73,6 +73,7 @@ var (
  
  */
 func NewChat(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/newChat", "")
 	/* Check validity */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
@@ -160,6 +161,7 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
  * leak information.
  */
 func AcceptChat(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/acceptChat", "")
 	/* Validate client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
@@ -237,6 +239,7 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
  *
  */
 func FindChat(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/findChat", "")
 	/* Validate client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)

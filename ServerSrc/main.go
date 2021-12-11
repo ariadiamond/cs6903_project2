@@ -17,6 +17,9 @@ var (
 	port     = flag.Int("port", 4443, "Port to run HTTP Server on")
 	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the " +
 		"DEBUG variable to be set")
+	logFile  = flag.String("l", "os.Stdout", "Log file to write to")
+	errFile  = flag.String("e", "os.Stderr", "Error file to write to")
+	
 	debug    = false
 )
 
@@ -29,6 +32,7 @@ func connectToDB() {
 	if err = Jarvis.Ping(); err != nil {
 		Fatal(err.Error(), 1)
 	}
+	Info("Database connected")
 }
 
 func main() {
@@ -39,6 +43,13 @@ func main() {
 	} else {
 		debug = false
 	}
+	if *logFile != "os.Stdout" {
+		SetLogFile(*logFile)
+	}
+	if *errFile != "os.Stderr" {
+		SetErrFile(*errFile)
+	}
+	
  	go RemoveToken() // Multi-thread call for RemoveToken
 	// call function to initialize connection with Jarvis
 	connectToDB()
@@ -64,6 +75,7 @@ func main() {
 	// Run server
 	// If DEBUG set, allow for HTTP (instead of HTTPS)
 	if debug && *insecure {
+		Warn("Using HTTP instead of HTTPS. Much of the JavaScript code will not work")
 		Fatal(srv.ListenAndServe().Error(), 1)
 	} else {
 		Fatal(srv.ListenAndServeTLS("./cert.pem", "./key.pem").Error(), 1)

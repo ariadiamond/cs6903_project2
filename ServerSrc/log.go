@@ -8,10 +8,10 @@ import (
 const (
 	RED     = "\x1b[31m"
 	GREEN   = "\x1b[32m"
-	YELLOW  = "\x1b[33m"
+//	YELLOW  = "\x1b[33m"
 	BLUE    = "\x1b[34m"
 	MAGENTA = "\x1b[35m"
-	CYAN    = "\x1b[36m"
+//	CYAN    = "\x1b[36m"
 	UNSET   = "\x1b[0m"
 )
 
@@ -43,18 +43,26 @@ func Fatal(str string, code int) {
 }
 
 func Error(str string) {
-	fmt.Fprintf(ErrLog, "[%sERR%s]:  %s%s%s\n", RED, UNSET, RED, str, UNSET)
+	if (Verbosity > 0) {
+		fmt.Fprintf(ErrLog, "[%sERR%s]:  %s%s%s\n", RED, UNSET, RED, str, UNSET)
+	}
 }
 
 func Warn(str string) {
-	fmt.Fprintf(LogFile, "[%sWARN%s]: %s%s%s\n", MAGENTA, UNSET, MAGENTA, str, UNSET)
+	if (Verbosity > 1) {
+		fmt.Fprintf(LogFile, "[%sWARN%s]: %s%s%s\n", MAGENTA, UNSET, MAGENTA, str, UNSET)
+	}
 }
 
 func Info(str string) {
-	fmt.Fprintf(LogFile, "[%sINFO%s]: %s%s%s\n", BLUE, UNSET, BLUE, str, UNSET)
+	if (Verbosity > 2) {
+		fmt.Fprintf(LogFile, "[%sINFO%s]: %s%s%s\n", BLUE, UNSET, BLUE, str, UNSET)
+	}
 }
 
 func Endpoint(endpoint string, data string) {
-	fmt.Fprintf(LogFile, "[%sEND%s]:  %s%s%s || %s%s%s\n", GREEN, UNSET, GREEN, endpoint, UNSET,
-		GREEN, data, UNSET)
+	if (Verbosity > 3) {
+		fmt.Fprintf(LogFile, "[%sEND%s]:  %s%s%s || %s%s%s\n", GREEN, UNSET, GREEN, endpoint, UNSET,
+			GREEN, data, UNSET)
+	}
 }

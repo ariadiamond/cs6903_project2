@@ -37,6 +37,7 @@ type getPublicKeyResponse struct {
  * maintained server-side during communication).
  */
 func AuthStep1(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/auth/1", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {
@@ -93,7 +94,7 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
  * SELECT hash FROM Users WHERE userID = cryptikID;
  */
 func AuthStep2(w http.ResponseWriter, r *http.Request) {
-
+	Endpoint("/auth/2", "")
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
 		return
@@ -156,6 +157,7 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
  *
  */
 func GetPublicKey(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/getpk/", r.URL.Path[len("/getpk/"):])
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if r.Method != http.MethodGet {

@@ -32,7 +32,7 @@ type getMessagesResponse struct {
  * The client needs to send their session cookie along with the request.
  */
 func SendMessage(w http.ResponseWriter, r *http.Request) {
-
+	Endpoint("/send", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {
@@ -100,7 +100,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
  * The client needs to send their session cookie along with the request.
  */
 func GetMessages(w http.ResponseWriter, r *http.Request) {
-
+	Endpoint("retrieve", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {

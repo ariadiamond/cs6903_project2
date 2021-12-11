@@ -19,10 +19,9 @@ type createUserResponse struct {
 	SessionToken string `json:"sesssionToken"`
 }
 
-type StoreSecretData struct{
-	id string `json:"id"`
-	sessionToken string `json:"sessionToken"`
-	encryptedData []byte `json:"encryptedData"`
+type storeSecretData struct{
+	SessionToken string `json:"sessionToken"`
+	EncryptedData []byte `json:"encryptedData"`
 }
 
 const (
@@ -38,6 +37,7 @@ var (
  * to allow the user to be logged in and start chats and send messages.
  */
 func CreateUser(w http.ResponseWriter, r *http.Request) {
+	Endpoint("/create", "")
 	/* Verify Client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
@@ -111,7 +111,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		SessionToken: sessionToken,
 	}
 
-	if err := json.NewEncoder(w).Encode(response); err != nil { // implicit 200
+	if  json.NewEncoder(w).Encode(response) != nil { // implicit 200
 		w.WriteHeader(500)
 		// implicit return
 	}
@@ -125,32 +125,32 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
  * intruder).
  */
 func StoreSecret(w http.ResponseWriter, r *http.Request) {
-
+	Endpoint("/storeSecret", "")
 	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
 		return
 	}
 
-	var serverData StoreSecretData
-	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
+	var serverData storeSecretData
+	if json.NewDecoder(r.Body).Decode(&serverData) != nil {
 		w.WriteHeader(400)
 		return
 	}
 
 	// check if SessionToken is valid
-    if !ValidateToken(serverData.sessionToken) {
+    if !ValidateToken(serverData.SessionToken) {
         w.WriteHeader(400)
         return
     }
 
-	id, exist := DereferenceToken(serverData.sessionToken)
+	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
 		return
 	}
 
 	// io write encryptedData to file
-	 if ioutil.WriteFile("UserKeys/" + id, serverData.encryptedData, 0600) != nil {
+	 if ioutil.WriteFile("UserKeys/" + id, serverData.EncryptedData, 0600) != nil {
 		 w.WriteHeader(500)
 		 return
 	 }
