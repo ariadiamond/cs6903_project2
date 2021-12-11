@@ -57,7 +57,7 @@ for ;; time.Sleep(time.Hour()) {
 	// Iterate through Nonces to check if any have expired
 	for _, key := range(NonceHolder.Keys){
 		value, _ := NonceHolder[key]
-		if time.Now() - NONCE_EXPIRATION > value.Created {
+		if if time.Now().After(value.Created.Add(NONCE_EXPIRATION)) {
 			delete(NonceHolder, key)
 			}
 		}
@@ -65,7 +65,7 @@ for ;; time.Sleep(time.Hour()) {
 	// Iterate through the Session Tokens to check if any have expired
 	for _, key := range(SessionHolder.Keys) {
 		value, _ := SessionHolder[key]
-		if time.Now() - TOKEN_EXPIRATION > value.Created {
+		if if time.Now().After(value.Created.Add(TOKEN_EXPIRATION)) {
 			delete(SessionHolder, key)
 			}
 		}
@@ -101,7 +101,7 @@ func GetNonce(id string) (string, bool) {
 		return "", false
 	}
 	// Check that nonce has not expired
-	if time.Now() - NONCE_EXPIRATION > nonce.Created {
+	if time.Now().After(nonce.Created.Add(NONCE_EXPIRATION)) {
 			return "", false
 		}
 	return nonce.Nonce, true
@@ -116,7 +116,7 @@ func DereferenceToken(token string) (string, bool) {
 		return "", false
 	}
 	// Check that session Token has not expired
-	if time.Now() - TOKEN_EXPIRATION > id.Created {
+	if time.Now().After(id.Created.Add(TOKEN_EXPIRATION)) {
 		return "", false
 		}
 	return id.Id, true

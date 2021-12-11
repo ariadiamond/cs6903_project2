@@ -28,7 +28,10 @@ func SetLogFile(fileName string) {
 	}
 	LogFile = file
 }
-// TODO SetErrFile
+
+func SetErrFile(file string) {
+	fmt.FPrintf(Errlog, "[%sERRFILE%s]: %s%s%s\n", CYAN, UNSET, CYAN, file, UNSET)
+}
 
 func Fatal(str string, code int) {
 	fmt.FPrintf(Errlog, "[%sFATAL%s]: %s\n", RED, UNSET)
