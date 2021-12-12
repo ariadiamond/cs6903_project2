@@ -20,7 +20,8 @@ type createUserResponse struct {
 }
 
 type storeSecretData struct{
-	SessionToken string `json:"sessionToken"`
+	SessionToken  string `json:"sessionToken"`
+	Iv            string `json:"iv"`
 	EncryptedData []byte `json:"encryptedData"`
 }
 
@@ -146,6 +147,12 @@ func StoreSecret(w http.ResponseWriter, r *http.Request) {
 	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
+		return
+	}
+
+	_, err := Jarvis.Exec(`UPDATE Users SET iv = $1 WHERE id = $2;`, serverData.Iv, id)
+	if err != nil {
+		w.WriteHeader(500)
 		return
 	}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"regexp"
+	"strings"
 )
 
 // create regular expressions as global (to file) variables so we do not have to reinitialize them
@@ -24,9 +25,13 @@ func ValidateId(id string) bool {
 	return reId.Find([]byte(id)) == nil
 }
 
-// TODO Fix if cert does not start or end with -----... CERTIFICATE-----
-// if cert[:len(beginCert)] != "-----BEGIN CERTIFICATE-----" and for end
 func ValidateCert(cert string) bool {
+	if !strings.HasPrefix(cert, "-----BEGIN CERTIFICATE-----") {
+		return false
+	}
+	if !strings.HasSuffix(cert, "-----END CERTIFICATE-----") {
+		return false
+	}
 	return reCert.Find([]byte(cert)) != nil
 }
 

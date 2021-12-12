@@ -16,7 +16,6 @@ const (
 )
 
 var (
-	Verbosity = 0
 	LogFile  = os.Stdout
 	ErrLog   = os.Stderr
 )
@@ -43,25 +42,25 @@ func Fatal(str string, code int) {
 }
 
 func Error(str string) {
-	if (Verbosity > 0) {
+	if (*Verbosity > 0) {
 		fmt.Fprintf(ErrLog, "[%sERR%s]:  %s%s%s\n", RED, UNSET, RED, str, UNSET)
 	}
 }
 
 func Warn(str string) {
-	if (Verbosity > 1) {
+	if (*Verbosity > 1) {
 		fmt.Fprintf(LogFile, "[%sWARN%s]: %s%s%s\n", MAGENTA, UNSET, MAGENTA, str, UNSET)
 	}
 }
 
 func Info(str string) {
-	if (Verbosity > 2) {
+	if (*Verbosity > 2) {
 		fmt.Fprintf(LogFile, "[%sINFO%s]: %s%s%s\n", BLUE, UNSET, BLUE, str, UNSET)
 	}
 }
 
 func Endpoint(endpoint string, data string) {
-	if (Verbosity > 3) {
+	if (*Verbosity > 3) {
 		fmt.Fprintf(LogFile, "[%sEND%s]:  %s%s%s || %s%s%s\n", GREEN, UNSET, GREEN, endpoint, UNSET,
 			GREEN, data, UNSET)
 	}

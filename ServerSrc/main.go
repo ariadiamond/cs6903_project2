@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	_ "github.com/lib/pq"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"os"
@@ -17,6 +18,7 @@ var (
 	port     = flag.Int("port", 4443, "Port to run HTTP Server on")
 	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the " +
 		"DEBUG variable to be set")
+    Verbosity = flag.Int("v", 1, "Verbosity level 0-4")
 	logFile  = flag.String("l", "os.Stdout", "Log file to write to")
 	errFile  = flag.String("e", "os.Stderr", "Error file to write to")
 	
@@ -33,6 +35,18 @@ func connectToDB() {
 		Fatal(err.Error(), 1)
 	}
 	Info("Database connected")
+}
+
+func fileServer(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadFile(r.URL.Path)
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+	_, err = w.Write(data)
+	if err != nil {
+		w.WriteHeader(404)
+	}
 }
 
 func main() {
@@ -71,6 +85,8 @@ func main() {
 	// message.go
 	http.HandleFunc("/send",     SendMessage)
 	http.HandleFunc("/retrieve", GetMessages)
+	
+	http.HandleFunc("/", fileServer)
 
 	// Run server
 	// If DEBUG set, allow for HTTP (instead of HTTPS)

@@ -135,9 +135,9 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	channel := channelBI.Uint64()
 	
 	// Insert new data
-	stmt, err := Jarvis.Prepare(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7);`)
-	_, err = stmt.Exec(channel, strings.Join(clientData.Members, ","),
-		clientData.Members[1], clientData.G, clientData.P, clientData.Exps, clientData.Signature)
+	_, err := Jarvis.Exec(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7);`, channel,
+		strings.Join(clientData.Members, ","), clientData.Members[1], clientData.G, clientData.P,
+		clientData.Exps, clientData.Signature)
 	if err != nil {
 		w.WriteHeader(500)
 		return
