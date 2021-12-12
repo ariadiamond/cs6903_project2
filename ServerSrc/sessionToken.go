@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"sync"
 	"time"
 )
 
@@ -24,8 +25,10 @@ const (
 )
 
 var (
-	NonceHolder   = make(map[string]Nonce_t) // TODO convert to sync.Map
-	SessionHolder = make(map[string]Token_t) // TODO convert to sync.Map
+	NonceHolder   = make(map[string]Nonce_t)
+	SessionHolder = make(map[string]Token_t)
+	nonceLock   sync.RWMutex
+	sessionLock sync.RWMutex
 )
 
 /* AddSession generates a session token and adds it to the map, associating it with the it provided.
@@ -42,8 +45,11 @@ func AddSession(id string) (string, error) {
 		Id:      id,
 		Created: time.Now(),
 	}
+	
+	sessionLock.Lock()
 	SessionHolder[hexToken] = tokenData
-
+	sessionLock.Unlock()
+	
 	return hexToken, nil
 }
 
@@ -55,18 +61,22 @@ func RemoveToken() {
 	// Infinite  loop, checks every hour
 	for ;; time.Sleep(time.Hour) {
 		// Iterate through Nonces to check if any have expired
+		nonceLock.Lock()
 		for key, value := range(NonceHolder) {
 			if time.Now().After(value.Created.Add(NONCE_EXPIRATION)) {
 				delete(NonceHolder, key)
 			}
 		}
+		nonceLock.Unlock()
 
 		// Iterate through the Session Tokens to check if any have expired
+		sessionLock.Lock()
 		for key, value := range(SessionHolder) {
 			if time.Now().After(value.Created.Add(TOKEN_EXPIRATION)) {
 				delete(SessionHolder, key)
 			}
 		}
+		sessionLock.Unlock()
 	} // end external for
 }
 
@@ -85,7 +95,9 @@ func AddNonce(id string) (string, error) {
 		Created: time.Now(),
 	}
 
+	nonceLock.Lock()
 	NonceHolder[id] = nonceHolder
+	nonceLock.Unlock()
 
 	return nonceHex, nil
 }
@@ -94,6 +106,9 @@ func GetNonce(id string) (string, bool) {
 	if !ValidateId(id) {
 		return "", false
 	}
+	
+	nonceLock.RLock()
+	defer nonceLock.RUnlock()
 	nonce, exist := NonceHolder[id]
 	if !exist {
 		return "", false
@@ -109,6 +124,9 @@ func DereferenceToken(token string) (string, bool) {
 	if !ValidateToken(token) {
 		return "", false
 	}
+	
+	sessionLock.RLock()
+	defer sessionLock.RUnlock()
 	id, exist := SessionHolder[token]
 	if !exist {
 		return "", false

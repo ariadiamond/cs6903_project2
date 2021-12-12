@@ -43,7 +43,7 @@ function getBigPrime() {
       bi += 1n; // make odd
     }
     if (bi < 0n) { // negative
-        bi *= -1n;
+      bi *= -1n;
     }
     if (testPrime(bi)) { // check prime
       return bi;

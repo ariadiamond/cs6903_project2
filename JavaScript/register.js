@@ -20,6 +20,7 @@ async function setup() {
  * on success, and false on failure.
  */
 async function registerFunc(pubKey) {
+  console.log("register func");
   try { // catch promise if it is rejected
     var resp = await fetch("/create", {
       method: "POST",

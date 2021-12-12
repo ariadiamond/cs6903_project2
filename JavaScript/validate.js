@@ -35,8 +35,3 @@ export const Validate = {
   ValidateToken: ValidateToken
 };
 
-
-// TODO: write validate cert
-//export function ValidateCert(cert) {
-
-//}
