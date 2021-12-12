@@ -1,0 +1,40 @@
+{
+  "name": "cryptik",
+  "version": "1.0.0",
+  "description": "JavaScript frontend for Cryptik, an end-to-end encrypted messaging platform",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ariadiamond/cs6903_project2.git"
+  },
+  "author": "Best Team Ever",
+  "homepage": "https://github.com/ariadiamond/cs6903_project2#readme",
+  "devDependencies": {
+    "eslint": "^8.4.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "browser": true,
+      "es2021":  true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 13,
+      "sourceType": "module"
+    },
+    "rules": {
+      "indent": ["error", 2, { "SwitchCase": 1 }],
+      "linebreak-style": ["error", "unix"],
+      "camelcase": "warn",
+      "max-len": ["error", {
+        "code": 80, 
+        "tabWidth": 2, 
+        "ignoreUrls": true, 
+        "ignoreStrings": true
+      }],
+      "prefer-const": "warn",
+      "no-extra-parens": "error",
+      "no-warning-comments": ["error", {"terms": ["TODO", "FIXME"]}] 
+    }
+  }
+}
