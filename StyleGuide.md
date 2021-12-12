@@ -9,10 +9,10 @@
 ```JavaScript
 function cherries() {
     if (true) {
-        var friends = ["Gabi", "Adam", "Ender"];
+        var friends = ["Gabi", "Adam", "Ender"]; // function scope
     }
     for (const friend of friends) {
-        let friendo = friend;
+        let friendo = friend; // block scope
     }
     friends += "Kevin";
     if (friendo == "Kevin") { // error
@@ -28,7 +28,7 @@ Language References:
 
 ## Server
 ### Golang
-- Soft tabs with 4 spaces as a tab
+- Hard tabs
 - 100 character max width
 
 Language References:

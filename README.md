@@ -13,6 +13,12 @@ anonymous messaging called Cryptik. This is type 1 of project 2.
 It is incomplete.
 
 ## Sources
+- [Askfm](https://ask.fm): our inspiration.
+
+### PostgreSQL
+- [Docker container](https://hub.docker.com/_/postgres)
+- [Dockerfile reference](https://docs.docker.com/engine/reference/builder/)
+- [Server configuration](https://www.postgresql.org/docs/current/runtime-config.html)
 
 ### JavaScript
 - [MDN: Local Storage](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API)
@@ -29,3 +35,4 @@ It is incomplete.
 
 #### Libaries
 - [noble-ed25519](https://github.com/paulmillr/noble-ed25519)
+
