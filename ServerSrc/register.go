@@ -46,16 +46,17 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data createUserData
-	if json.NewDecoder(r.Body).Decode(&data) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+        Error(err.Error())
 		w.WriteHeader(400)
 		return
 	}
 
     // Validate certificate
-    if !ValidateCert(data.PublicKey) {
-        w.WriteHeader(400)
-        return
-    }
+    //if !ValidateCert(data.PublicKey) {
+    //    w.WriteHeader(400)
+    //    return
+    //}
 
 	/* Alright now we can start doing things */
 	// lock new user mutex
@@ -74,7 +75,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		newID := hex.EncodeToString(newByteID)
 		// check if this ID has been used already
-		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Users WHERE id = ?`, newID)
+		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Users WHERE id = $1`, newID)
 		if err != nil {
 			w.WriteHeader(500)
 			return

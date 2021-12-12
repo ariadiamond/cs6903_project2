@@ -97,7 +97,7 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		File:  encryptedData,
 	}
 
-	if  json.NewEncoder(w).Encode(&response) != nil { // implicit 200
+	if json.NewEncoder(w).Encode(&response) != nil { // implicit 200
 		w.WriteHeader(500)
 		return
 	}

@@ -82,7 +82,7 @@ function modExp(base, exponent, modulus) {
   }
 }
 
-/* export */ const num = {
+export const num = {
   getP:   getBigPrime,
   getG:   getG,
   getX:   getX,

@@ -1,8 +1,8 @@
 import { Validate } from "/JavaScript/validate.js";
 import { encryptedStore } from "/JavaScript/encryptedStorage.js";
-import * as ed25519 from "/JavaScript/Libs/ed25519.js";
+import * as ed25519 from "/JavaScript/Libs/noble-ed25519.js";
 
-/* export */ const errAuth = {
+const errAuth = {
   Id:         1,
   Auth1:      2,
   InvalNonce: 3,
@@ -13,7 +13,7 @@ import * as ed25519 from "/JavaScript/Libs/ed25519.js";
   NoNonce:    8
 };
 
-/* export */ async function auth(password) {
+async function authFunc(password) {
   const id = localStorage.getItem("id");
   if (id == null) {
     return errAuth.Id;
@@ -77,7 +77,7 @@ import * as ed25519 from "/JavaScript/Libs/ed25519.js";
   }
 }
 
-/* export */ function getPK(id) {
+function getPK(id) {
   return fetch("/getpk/" + id)
     .then(response => {
       if (response.status != 200) {
@@ -87,3 +87,9 @@ import * as ed25519 from "/JavaScript/Libs/ed25519.js";
     })
     .catch(false);
 }
+
+export const auth = {
+  err:   errAuth,
+  auth:  authFunc,
+  getPK: getPK
+};

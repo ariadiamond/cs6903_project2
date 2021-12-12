@@ -1,6 +1,6 @@
 import { encryptedStore } from "/JavaScript/encryptedStorage.js";
 import { vectorClock } from "/JavaScript/vectorClock.js";
-import * as ed25519 from "/JavaScript/Libs/ed25519.js";
+import * as ed25519 from "/JavaScript/Libs/noble-ed25519.js";
 
 const errRecv = {
   EAuth:       1,
@@ -108,7 +108,7 @@ async function decrypt(channel, iv, encryptedData) {
   return JSON.parse(decrypted.toString());
 }
 
-/* export */ const recieve = {
+export const recieve = {
   err:     errRecv,
   recieve: recieveMessages
 }

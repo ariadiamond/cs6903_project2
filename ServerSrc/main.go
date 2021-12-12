@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"os"
 )
 
@@ -27,24 +28,39 @@ var (
 
 func connectToDB() {
 	connStr := "user=postgres dbname=postgres password=unused"
-	Jarvis, err := sql.Open("postgres", connStr)
+    var err error
+	Jarvis, err = sql.Open("postgres", connStr)
 	if err != nil {
 		Fatal(err.Error(), 1)
 	}
 	if err = Jarvis.Ping(); err != nil {
 		Fatal(err.Error(), 1)
 	}
+    Jarvis.Query(`SELECT 1`)
 	Info("Database connected")
 }
 
 func fileServer(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadFile(r.URL.Path)
+    Endpoint("/", r.URL.Path)
+	data, err := ioutil.ReadFile("." + r.URL.Path)
 	if err != nil {
+		Error(err.Error())
 		w.WriteHeader(404)
 		return
 	}
+	if strings.HasSuffix(r.URL.Path, ".js") {
+		w.Header().Add("Content-Type", "application/javascript")
+	}
+	if strings.HasSuffix(r.URL.Path, ".css") {
+		w.Header().Add("Content-Type", "text/css")
+	}
+	if strings.HasSuffix(r.URL.Path, ".html") {
+		w.Header().Add("Content-Type", "text/html")
+	}
+	w.Header().Add("X-Content-Type-Options", "nosniff")
 	_, err = w.Write(data)
 	if err != nil {
+		Error(err.Error())
 		w.WriteHeader(404)
 	}
 }
