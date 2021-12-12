@@ -1,7 +1,7 @@
-import { encryptedStore } from "encryptedStorage.js";
-import { num } from "num.js";
+import { encryptedStore } from "/JavaScript/encryptedStorage.js";
+import { num } from "/JavaScript/num.js";
 
-import * as ed25519 from "ed25519.js";
+import * as ed25519 from "/JavaScript/Libs/ed25519.js";
 
 const errFind = {
   EAuth:     1,
@@ -142,7 +142,7 @@ async function verify(chan) {
   return await ed25519.verify(chan.signature, msgHash, json.pubKey);
 }
 
-export const findChat = {
+/* export */ const findChat = {
   err:      errFind,
   findChat: findChatFun
 }

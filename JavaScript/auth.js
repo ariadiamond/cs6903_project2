@@ -1,8 +1,8 @@
-import { Validate } from "validate.js";
-import { encryptedStore } from "encryptedStorage.js";
-import * as ed25519 from "noble-ed25519.js";
+import { Validate } from "/JavaScript/validate.js";
+import { encryptedStore } from "/JavaScript/encryptedStorage.js";
+import * as ed25519 from "/JavaScript/Libs/ed25519.js";
 
-export const errAuth = {
+/* export */ const errAuth = {
   Id:         1,
   Auth1:      2,
   InvalNonce: 3,
@@ -13,7 +13,7 @@ export const errAuth = {
   NoNonce:    8
 };
 
-export async function auth(password) {
+/* export */ async function auth(password) {
   const id = localStorage.getItem("id");
   if (id == null) {
     return errAuth.Id;
@@ -77,7 +77,7 @@ export async function auth(password) {
   }
 }
 
-export function getPK(id) {
+/* export */ function getPK(id) {
   return fetch("/getpk/" + id)
     .then(response => {
       if (response.status != 200) {

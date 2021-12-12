@@ -1,6 +1,6 @@
-export const ID_LEN     = 4;
-export const NONCE_SIZE = 32;
-export const TOKEN_SIZE = 32;
+/* export */ const ID_LEN     = 4;
+/* export */ const NONCE_SIZE = 32;
+/* export */ const TOKEN_SIZE = 32;
 
 const reID    = new RegExp("[^0-9a-fA-F]");
 const reNonce = new RegExp("[^0-9a-fA-F]");
@@ -29,7 +29,7 @@ function ValidateToken(token) {
   return !reToken.test(token);
 }
 
-export const Validate = {
+/* export */ const Validate = {
   ValidateId:    ValidateId,
   ValidateNonce: ValidateNonce,
   ValidateToken: ValidateToken
@@ -37,6 +37,6 @@ export const Validate = {
 
 
 // TODO: write validate cert
-//export function ValidateCert(cert) {
+///* export */ function ValidateCert(cert) {
 
 //}

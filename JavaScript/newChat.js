@@ -1,7 +1,7 @@
-import { encryptedStore } from "encryptedStorage.js";
-import { vectorClock } from "vectorClock.js";
-import { num } from "num.js";
-import * as ed25519 from "noble-ed25519.js";
+import { encryptedStore } from "/JavaScript/encryptedStorage.js";
+import { vectorClock } from "/JavaScript/vectorClock.js";
+import { num } from "/JavaScript/num.js";
+import * as ed25519 from "/JavaScript/Libs/ed25519.js";
 
 const errNewChat = {
   EAuth:     1,
@@ -140,7 +140,7 @@ async function sign(msg) {
   return btoa(signature.toString());
 }
 
-export const newChat = {
+/* export */ const newChat = {
   errNewChat: errNewChat,
   createChat: createChat,
   acceptChat: acceptChat  

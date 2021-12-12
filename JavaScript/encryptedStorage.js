@@ -31,7 +31,7 @@ async function decryptData(iv, salt, encryptedData, password) {
     "raw",          // raw key material
     Array.from(password.map(d => d.charCodeAt(0))), // array of password bits
     "PBKDF2",       // use PBKDF2 to derive an AES key for this
-    false,          // do not allow exports
+    false,          // do not allow /* export */s
     ["deriveKey"]); // this will be used for derivation 
   const key = await crypto.subtle.deriveKey(
     {
@@ -183,7 +183,7 @@ async function storeWithServer() {
 /* encryptedStore is an object that holds the functions implemented, as well as
  * "err", which holds the error codes from the functions.
  */
-export const encryptedStore = {
+/* export */ const encryptedStore = {
   err:             errEncryptedStore,
   init:            init,
   decryptData:     decryptData,

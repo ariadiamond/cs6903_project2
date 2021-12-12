@@ -139,7 +139,7 @@ function compareClock(local, external) {
 }
 
 
-export const vectorClock = {
+/* export */ const vectorClock = {
   err:         errVec,
   initChannel: initChannel,
   increment:   increment,

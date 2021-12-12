@@ -1,11 +1,11 @@
 // my imports
-import { encryptedStore } from "encryptedStorage.js";
+import { encryptedStore } from "/JavaScript/encryptedStorage.js";
 
 // imports to external libraries
-import * as ed25519 from "noble-ed25519.js";
+import * as ed25519 from "/JavaScript/Libs/ed25519.js";
 
 // errors possible from sendMessage
-export const errSend = {
+/* export */ const errSend = {
   NoToken:   1,
   NoKey:     2,
   FetchFail: 3,
@@ -17,7 +17,7 @@ export const errSend = {
 /* sendMessage is an asynchronous function that handles the entire process of
  * encrypting, signing, and sending a message to a channel.
  */
-export async function sendMessage(channel, message) {
+/* export */ async function sendMessage(channel, message) {
   var token = localStorage.getItem("token");
   if (token == null) {
     return errSend.NoToken;
