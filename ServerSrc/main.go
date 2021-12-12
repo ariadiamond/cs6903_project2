@@ -36,7 +36,6 @@ func connectToDB() {
 	if err = Jarvis.Ping(); err != nil {
 		Fatal(err.Error(), 1)
 	}
-    Jarvis.Query(`SELECT 1`)
 	Info("Database connected")
 }
 
