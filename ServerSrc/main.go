@@ -27,7 +27,7 @@ var (
 )
 
 func connectToDB() {
-	connStr := "user=postgres dbname=postgres password=unused"
+	connStr := "user=postgres dbname=postgres password=unused host=10.10.0.2"
     var err error
 	Jarvis, err = sql.Open("postgres", connStr)
 	if err != nil {
