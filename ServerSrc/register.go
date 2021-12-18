@@ -16,7 +16,7 @@ type createUserData struct {
 
 type createUserResponse struct {
 	Id           string `json:"id"`
-	SessionToken string `json:"sesssionToken"`
+	SessionToken string `json:"sessionToken"`
 }
 
 type storeSecretData struct{
@@ -70,10 +70,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := rand.Read(newByteID); numRes != 0; _, err = rand.Read(newByteID) {
 		if err != nil { // unable to generate randomness
+			Warn("Unable to generate randomness")
 			w.WriteHeader(500)
 			return
 		}
-		newID := hex.EncodeToString(newByteID)
+		newID = hex.EncodeToString(newByteID)
+		Info(newID)
 		// check if this ID has been used already
 		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Users WHERE id = $1`, newID)
 		if err != nil {
@@ -92,8 +94,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		rows.Close()
 	}
-
-	if _, err := Jarvis.Exec(`INSERT INTO Users VALUES ($1, $2);`, newID, data.PublicKey);
+	
+	if _, err := Jarvis.Exec(`INSERT INTO Users(id, pubKey) VALUES ($1, $2)`, newID, data.PublicKey);
 		err != nil {
 		// What do we do? just fail?
 		w.WriteHeader(500)

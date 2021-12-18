@@ -3,7 +3,7 @@
 CREATE TABLE Users (
 	id     CHAR(4)  PRIMARY KEY,
 	iv     CHAR(16),
-	pubKey CHAR(48) NOT NULL -- 32 bytes of data in base64
+	pubKey CHAR(128) NOT NULL -- 32 bytes of data in base64
 );
 
 CREATE TABLE Channels (
