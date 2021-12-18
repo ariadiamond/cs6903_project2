@@ -24,7 +24,7 @@ body {
   text-align:center;
 }
 
-form{
+.form{
   display:flex;
   flex-direction:column;
   justify-content:space-around;

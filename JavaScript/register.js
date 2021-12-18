@@ -27,6 +27,7 @@ async function registerFunc(pubKey) {
       body: JSON.stringify({"publicKey": pubKey.toString()})
     });
   } catch(e) {
+    console.log("error")
     console.log(e);
     return false;
   }
@@ -34,6 +35,7 @@ async function registerFunc(pubKey) {
   switch (resp.status) {
     case 200:
       var json = await resp.json(); // parse json object
+      console.log(json);
       if (!Validate.ValidateId(json.id) ||              // check the server is
           !Validate.ValidateToken(json.sessionToken)) { // not giving bad data
         return false;
@@ -43,6 +45,7 @@ async function registerFunc(pubKey) {
       localStorage.setItem("sessionToken", json.sessionToken);
       return true;
     default: // 400, 500
+      console.log("default");
       return false;
   }
 }
