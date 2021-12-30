@@ -12,9 +12,9 @@ function init(privKey) {
   var decryptObj = {
     privKey:   privKey,
     timestamp: Date()
-  }
+  };
   
-  sessionStorage.setItem("decryptObj", decryptObj)
+  sessionStorage.setItem("decryptObj", JSON.stringify(decryptObj));
 }
 
 /* decryptData takes the encrypted data stored on the server (or locally) and
@@ -45,15 +45,14 @@ async function decryptData(iv, salt, encryptedData, password) {
     false,
     ["encrypt", "decrypt"]
   );
-  sessionStorage.setItem("pbKey", key);
+  sessionStorage.setItem("pbKey", JSON.stringify(key));
   // now that we have the key, we can decrypt!
   const decryptData = await crypto.subtle.decrypt(
     {name: "AES-GCM", iv: Array.from(iv.map(d => d.charCodeAt(0)))},
     key,
     Array.from(encryptedData.map(d => d.charCodeAt(0)))
   );
-  const decryptObj = JSON.parse(decryptData);
-  sessionStorage.setItem("decryptObj", decryptObj);
+  sessionStorage.setItem("decryptObj", decryptData);
   return 0;
 }
 
@@ -61,10 +60,11 @@ async function decryptData(iv, salt, encryptedData, password) {
  */
 function getPrivKey() {
   // get and check for decryptObj
-  const decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
+  const decryptString = sessionStorage.getItem("decryptObj");
+  if (decryptString == null) {
     errEncryptedStore.NoDecryptObj;
   }
+  const decryptObj = JSON.parse(decryptString);
   
   // try to get the private key
   const privKey = decryptObj?.privKey;
@@ -79,10 +79,11 @@ function getPrivKey() {
  * a CryptoKey with the AES-GCM key if the channel has been initialized.
  */
 function getKey(channel) {
-  const decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
+  const decryptString = sessionStorage.getItem("decryptObj");
+  if (decryptString == null) {
     errEncryptedStore.NoDecryptObj;
   }
+  const decryptObj = JSON.parse(decryptString);
   
   const key = decryptObj[channel]?.key;
   if (key == null) {
@@ -92,10 +93,12 @@ function getKey(channel) {
 }
 
 function getTimestamp() {
-  var decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
+  const decryptString = sessionStorage.getItem("decryptObj");
+  if (decryptString == null) {
     return errEncryptedStore.NoDecryptObj;
   }
+  const decryptObj = JSON.parse(decryptString);
+  
   return decryptObj.timestamp;
 }
 
@@ -106,27 +109,30 @@ function getTimestamp() {
  * TODO ensure that there are no conflicts with load-update-store operations
  */
 function setKey(channel, keyObj) {
-  var decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
+  const decryptString = sessionStorage.getItem("decryptObj");
+  if (decryptString == null) {
     return errEncryptedStore.NoDecryptObj;
   }
+  var decryptObj = JSON.parse(decryptString);
   
-  if (decryptObj?.channel == null) { // initialize channel
-    decryptObj.channel = new Object();
+  if (decryptObj[channel] == null) { // initialize channel
+    decryptObj[channel] = new Object();
   }
   
-  decryptObj.channel.key = keyObj;
-  sessionStorage.setItm("decryptObj", decryptObj);
+  decryptObj[channel].key = keyObj;
+  sessionStorage.setItm("decryptObj", JSON.stringify(decryptObj));
   return 0;
 }
 
 function setTimestamp(timestamp) {
-  var decryptObj = sessionStorage.getItem("decryptObj");
-  if (decryptObj == null) {
+  const decryptString = sessionStorage.getItem("decryptObj");
+  if (decryptString == null) {
     return errEncryptedStore.NoDecryptObj;
   }
+  var decryptObj = JSON.parse(decryptString);
+  
   decryptObj.timestamp = timestamp;
-  sessionStorage.setItem("decryptObj", decryptObj);
+  sessionStorage.setItem("decryptObj", JSON.stringify(decryptObj));
 }
 
 /* storeWithServer creates a new iv and encrypts the secret keys associated with
@@ -139,14 +145,14 @@ function setTimestamp(timestamp) {
  * TODO store salt on server too?
  */
 async function storeWithServer() {
-  const key        = sessionStorage.getItem("pbKey");
-  const decryptObj = sessionStorage.getItem("decryptObj");
-  const token      = localStorage.getItem("token");
-  if (key == null || decryptObj == null || token == null) {
+  const key        = JSON.parse(sessionStorage.getItem("pbKey"));
+  const decryptString = sessionStorage.getItem("decryptObj");
+  const token      = JSON.parse(localStorage.getItem("token"));
+  if (key == null || decryptString == null || token == null) {
     return errEncryptedStore.MissingData;
   }
   
-  const dataToEnc = Array.from(JSON.stringify(decryptObj)
+  const dataToEnc = Array.from(JSON.stringify(decryptString)
     .map(d => d.charCodeAt(0)));
   
   // create a new iv for each time we store the data on the server

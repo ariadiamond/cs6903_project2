@@ -11,10 +11,11 @@ const EQUAL   = 3;
 
 
 function initChannel(channel, members) {
-  var vecObj = sessionStorage.getItem("vecObj");
-  if (vecObj == null) {
+  const vecString = sessionStorage.getItem("vecObj");
+  if (vecString == null) {
     return errVec.NoVecObj;
   }
+  var vecObj = JSON.parse(vecString);
   var newChan = {
     members:   members,
     clock:     new Uint32Array(members.length),
@@ -22,6 +23,7 @@ function initChannel(channel, members) {
     Buffered:  new Array()
   };
   vecObj[channel] = newChan;
+  sessionStorage.setItem("vecObj", JSON.stringify(vecObj));
   
 }
 
@@ -32,10 +34,12 @@ function increment(channel) {
 }
 
 function incrementIdx(channel, idx) {
-  var vecObj = sessionStorage.getItem("vecObj");
-  if (vecObj == null) {
+  const vecString = sessionStorage.getItem("vecObj");
+  if (vecString == null) {
     return errVec.NoVecObj;
   }
+  var vecObj = JSON.parse(vecString);
+  
   var chan = vecObj[channel];
   if (chan == null) {
     return errVec.NoChannel;
@@ -45,12 +49,14 @@ function incrementIdx(channel, idx) {
   }
   chan.clock[idx] += 1;
   vecObj[channel] = chan;
-  sessionStorage.setItem("vecObj", vecObj);
-  return chan.clock;  
+  sessionStorage.setItem("vecObj", JSON.stringify(vecObj));
+  return chan.clock;
 }
 
 function getIdx(channel, from) {
-  var vecObj = sessionStorage.getItem("vecObj");
+  const vecString = sessionStorage.getItem("vecObj");
+  var vecObj = JSON.parse(vecString);
+  
   var chan = vecObj[channel];
   var i = 0;
   for (const member of chan.members) {
@@ -63,10 +69,12 @@ function getIdx(channel, from) {
 }
 
 function deliver(from, channel, clock, message) {
-  var vecObj = sessionStorage.getItem("vecObj");
-  if (vecObj == null) {
+  const vecString = sessionStorage.getItem("vecObj");
+  if (vecString == null) {
     return errVec.NoVecObj;
   }
+  var vecObj = JSON.parse(vecString);
+  
   var chan = vecObj[channel];
   if (chan == null) {
     return errVec.NoChannel;
@@ -86,7 +94,7 @@ function deliver(from, channel, clock, message) {
       break;
   }
   vecObj[channel] = chan;
-  sessionStorage.setItem("vecObj", vecObj);
+  sessionStorage.setItem("vecObj", JSON.stringify(vecObj));
   return 0;
 }
 
@@ -138,10 +146,23 @@ function compareClock(local, external) {
   return res;
 }
 
+function getChannels() {
+  const vecString = sessionStorage.getItem("vecObj");
+  if (vecString == null) {
+    return errVec.NoVecObj;
+  }
+  var vecObj = JSON.parse(vecString);
+  
+  console.log(vecObj);
+  console.log(Object.keys(vecObj));
+  return Object.keys(vecObj);
+}
+
 
 export const vectorClock = {
   err:         errVec,
   initChannel: initChannel,
   increment:   increment,
-  deliver:     deliver
+  deliver:     deliver,
+  getChannels: getChannels
 }
