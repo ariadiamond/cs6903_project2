@@ -1,4 +1,4 @@
-// library implementing operations on big ints
+// library implementing Diffie Hellman operations on big ints
 
 const PRIME_BITS = 3072;
 const G_BITS     = 256;
@@ -6,8 +6,9 @@ const X_BITS     = 256;
 const ITER       = 100;
 
 // from slide 19 of lecture 3
+// 2^-ITER probability of an incorrect result
 function testPrime(bi) {
-  for (var i = 0; i < ITER; i++) { // k
+  for (var i = 0; i < ITER; i++) {
     var r = 1000n;
     var r2 = 2n << r;
     while (r2 < bi) {
@@ -34,7 +35,7 @@ function testPrime(bi) {
 }
 
 function getBigPrime() {
-  for (;;) {
+  for (;;) { // try this until we get a prime
     var rand = crypto.getRandomValues(new Uint32Array(PRIME_BITS >> 5));
     var str = "0x";
     rand.forEach(d => str = str + d.toString(16));
@@ -42,7 +43,7 @@ function getBigPrime() {
     if (bi % 2n == 0n) {
       bi += 1n; // make odd
     }
-    if (bi < 0n) { // negative
+    if (bi < 0n) { // make positive
       bi *= -1n;
     }
     if (testPrime(bi)) { // check prime
@@ -59,6 +60,11 @@ function getG() {
   return bi;
 }
 
+/* getx creates a large random number that is X_BITS length. We use a shorter
+ * length because I think I saw somewhere that only the prime has to be super
+ * long and the base and exponent can be shorter. This should be checked at some
+ * point.
+ */
 function getX() {
   var rand = crypto.getRandomValues(new Uint32Array(X_BITS >> 5));
   var str = "0x";

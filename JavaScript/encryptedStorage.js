@@ -26,7 +26,7 @@ function init(privKey) {
  *     on the server
  *   - password, entered by the user and used to decrypt the data
  */
-async function decryptData(iv, salt, encryptedData, password) {
+async function decryptData(iv, encryptedData, password) {
   const forDeriveKey = await crypto.subtle.importKey(
     "raw",          // raw key material
     Array.from(password.map(d => d.charCodeAt(0))), // array of password bits
@@ -37,7 +37,6 @@ async function decryptData(iv, salt, encryptedData, password) {
     {
       name: "PBKDF2", 
       hash: "SHA-256", 
-      salt: Array.from(salt.map(d => d.charCodeAt(0))), 
       iterations: 1 << 20 // big number
     },
     forDeriveKey,
@@ -141,18 +140,36 @@ function setTimestamp(timestamp) {
  * by the client. Since the data is encrypted with AES256-GCM, it is infeasible
  * to expect an attacker to break the encryption (unless a poor password is
  * chosen).
- *
- * TODO store salt on server too?
  */
-async function storeWithServer() {
-  const key        = JSON.parse(sessionStorage.getItem("pbKey"));
+async function storeWithServer(password) {
+  console.log(Array.from(password).map(d => d.charCodeAt(0)));
+  const forDeriveKey = await crypto.subtle.importKey(
+    "raw",          // raw key material
+    new Uint8Array(Array.from(password).map(d => d.charCodeAt(0))), // bytes
+    "PBKDF2",       // use PBKDF2 to derive an AES key for this
+    false,          // do not allow exports
+    ["deriveKey"]); // this will be used for derivation
+  console.log("derive key");
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2", 
+      hash: "SHA-256",
+      salt: new Uint8Array(16), // TODO store on server so it can be non-zero
+      iterations: 1 << 20 // big number
+    },
+    forDeriveKey,
+    {name: "AES-GCM", length: 256},
+    false,
+    ["encrypt", "decrypt"]
+  );
+  sessionStorage.setItem("pbKey", JSON.stringify(key));
   const decryptString = sessionStorage.getItem("decryptObj");
-  const token      = JSON.parse(localStorage.getItem("token"));
-  if (key == null || decryptString == null || token == null) {
+  const token      = localStorage.getItem("token");
+  if (decryptString == null || token == null) {
     return errEncryptedStore.MissingData;
   }
   
-  const dataToEnc = Array.from(JSON.stringify(decryptString)
+  const dataToEnc = new Uint8Array(Array.from(decryptString)
     .map(d => d.charCodeAt(0)));
   
   // create a new iv for each time we store the data on the server
@@ -162,14 +179,13 @@ async function storeWithServer() {
     key,
     dataToEnc
   );
-  
   try {
     var response = await fetch("/store", {
       method: "POST",
       body: JSON.stringify({
         sessionToken: token,
-        iv: iv,
-        encryptedData: encData})
+        iv: btoa(String.fromCharCode(...Array.from(iv))), // convert to base64∂
+        encryptedData: JSON.stringify(encData)})
     });
   } catch(e) {
     return errEncryptedStore.FetchFail;

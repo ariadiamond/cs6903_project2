@@ -11,6 +11,7 @@ async function setup() {
   const privKey = ed25519.utils.randomPrivateKey();
   const pubKey  = await ed25519.getPublicKey(privKey);
   encryptedStore.init(privKey);
+  localStorage.setItem("pbKey", JSON.stringify(pubKey));
   return pubKey;
 }
 
@@ -42,7 +43,7 @@ async function registerFunc(pubKey) {
       }
       // store data
       localStorage.setItem("id", json.id);
-      localStorage.setItem("sessionToken", json.sessionToken);
+      localStorage.setItem("token", json.sessionToken);
       return true;
     default: // 400, 500
       console.log("default");

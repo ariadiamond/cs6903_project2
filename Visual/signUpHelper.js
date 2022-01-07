@@ -1,24 +1,23 @@
 import { register } from "/JavaScript/register.js";
+import { encryptedStore } from "/JavaScript/encryptedStorage.js";
 
 var signUpBtn = document.getElementById("signUpBtn");
 signUpBtn.onclick = init;
 
 async function init() {
   /* initialize local data */
-  console.log("setup data");
-  sessionStorage.setItem("decryptObj", {});
-  sessionStorage.setItem("vecObj", {});
-  console.log("create pub key");
+  encryptedStore.init();
+  sessionStorage.setItem("vecObj", "{}");
   var pubKey = await register.setup();
+  var pass = document.getElementById("password").value;
   
-  console.log("do request");
   var resp = await register.register(pubKey);
-  console.log("response");
   if (resp) { // we were able to sign up successfully
     console.log("Welcome", localStorage.getItem("id"));
-    location.assign("/Visual/cryptikChannelCreate.html")
+    var result = await encryptedStore.storeWithServer(pass); // Store (encrypted) private key
+    location.assign("/Visual/home.html")
   } else {
     console.log("signup failed");
-    alert("signup failed");
+    alert("Signup failed");
   }
 }

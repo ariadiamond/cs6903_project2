@@ -16,6 +16,7 @@ var Jarvis *sql.DB
 
 // Command Line Arugments
 var (
+    host     = flag.String("host", "127.0.0.1", "Host Postgres instance is running at")
 	port     = flag.Int("port", 4443, "Port to run HTTP Server on")
 	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the " +
 		"DEBUG variable to be set")
@@ -27,7 +28,7 @@ var (
 )
 
 func connectToDB() {
-	connStr := "user=postgres dbname=postgres password=unused host=10.10.0.2"
+	connStr := "user=postgres dbname=postgres password=unused host=" + *host
     var err error
 	Jarvis, err = sql.Open("postgres", connStr)
 	if err != nil {

@@ -22,7 +22,7 @@ type createUserResponse struct {
 type storeSecretData struct{
 	SessionToken  string `json:"sessionToken"`
 	Iv            string `json:"iv"`
-	EncryptedData []byte `json:"encryptedData"`
+	EncryptedData string `json:"encryptedData"`
 }
 
 const (
@@ -160,7 +160,7 @@ func StoreSecret(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// io write encryptedData to file
-	 if ioutil.WriteFile("UserKeys/" + id, serverData.EncryptedData, 0600) != nil {
+	 if ioutil.WriteFile("UserKeys/" + id, []byte(serverData.EncryptedData), 0600) != nil {
 		 w.WriteHeader(500)
 		 return
 	 }

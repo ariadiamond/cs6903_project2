@@ -28,14 +28,15 @@ async function authFunc(password) {
   } catch(e) {
     return errAuth.Auth1;
   }
-  
+  console.log(resp);
   switch (resp.status) {
     case 200:
+      console.log("To parse json");
       var json  = await resp.json();
+      console.log("Parsed json");
       var nonce = json.nonce;
       encryptedStore.decryptData(
         json.iv,
-        json.salt,
         json.encryptedFile,
         password);
       if (!Validate.ValidateNonce(nonce)) {
@@ -43,7 +44,7 @@ async function authFunc(password) {
       }
       break;
     case 404:
-      return errAuth.NoId;
+      return errAuth.Id;
     default:
       return errAuth.ServerErr;
   }
