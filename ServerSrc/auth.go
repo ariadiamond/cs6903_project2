@@ -3,6 +3,7 @@ package main
 // Includes
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,7 @@ type authStep1Data struct {
 type authStep1Response struct {
 	Nonce string `json:"nonce"`
 	Iv    string `json:"iv"`
-	File  []byte `json:"encryptedFile"`
+	File  string `json:"encryptedFile"`
 }
 
 type authStep2Data struct {
@@ -74,7 +75,7 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	rows, err := Jarvis.Query(`SELECT iv FROM Users WHERE id = $1;`, clientData.Id)
+	rows, err := Jarvis.Query(`SELECT iv FROM Users WHERE id = $1`, clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
 		return
@@ -94,7 +95,7 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	response := authStep1Response{
 		Nonce: nonce,
 		Iv:    iv,
-		File:  encryptedData,
+		File:  string(encryptedData),
 	}
 
 	if json.NewEncoder(w).Encode(&response) != nil { // implicit 200
@@ -124,8 +125,9 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, clientData.Id)
+	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = $1`, clientData.Id)
 	if err != nil {
+        Error(err.Error())
 		w.WriteHeader(404)
 		return
 	}
@@ -136,19 +138,29 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pubKey := make([]byte, ed25519.PublicKeySize)
-
-	if rows.Scan(&pubKey) != nil {
+	pubKeyB64 := make([]byte, ed25519.PublicKeySize << 1)
+	if rows.Scan(&pubKeyB64) != nil {
+        Error("Scan error")
 		w.WriteHeader(404)
 		return
 	}
-
+    Info(string(pubKeyB64))
+	pubKey := make([]byte, ed25519.PublicKeySize)
+    _, err = base64.StdEncoding.Decode(pubKey, pubKeyB64[:44])
+    if err != nil {
+    	Error(err.Error())
+    	w.WriteHeader(500)
+    	return
+    }
 	nonce, exists := GetNonce(clientData.Id)
 	if !exists {
+        Error("No Nonce")
 		w.WriteHeader(404)
 		return
 	}
 
+	Info(nonce)
+	Info(string(clientData.Signature))
 	if !ed25519.Verify(pubKey, []byte(nonce), clientData.Signature) {
 		w.WriteHeader(403)
 		return

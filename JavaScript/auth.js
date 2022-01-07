@@ -1,6 +1,6 @@
 import { Validate } from "/JavaScript/validate.js";
 import { encryptedStore } from "/JavaScript/encryptedStorage.js";
-import * as ed25519 from "/JavaScript/Libs/noble-ed25519.js";
+import { ed25519 } from "/JavaScript/Libs/noble-ed25519.js";
 
 const errAuth = {
   Id:         1,
@@ -28,14 +28,11 @@ async function authFunc(password) {
   } catch(e) {
     return errAuth.Auth1;
   }
-  console.log(resp);
   switch (resp.status) {
     case 200:
-      console.log("To parse json");
       var json  = await resp.json();
-      console.log("Parsed json");
       var nonce = json.nonce;
-      encryptedStore.decryptData(
+      await encryptedStore.decryptData(
         json.iv,
         json.encryptedFile,
         password);
@@ -50,12 +47,16 @@ async function authFunc(password) {
   }
   
   const privKey = encryptedStore.getPrivKey();
-  const signature = await ed25519.sign(nonce, privKey);
-  
+  console.log("?");
+  var arrNonce = new Uint8Array(Array.from(nonce).map(d => d.charCodeAt(0)));
+  console.log(arrNonce);
+
+  const signature = await ed25519.sign(arrNonce, privKey);
+  console.log(...Array.from(signature));
   try {
     resp = await fetch("/auth/2", {
       method: "POST",
-      body: JSON.stringify({id: id, nonce: nonce, signature: signature})
+      body: JSON.stringify({id: id, nonce: nonce, signature: btoa(String.fromCharCode(...Array.from(signature)))})
     });
   } catch(e) {
     return errAuth.Auth2;

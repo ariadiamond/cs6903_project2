@@ -10,8 +10,8 @@ const errEncryptedStore = {
 
 function init(privKey) {
   var decryptObj = {
-    privKey:   privKey,
-    timestamp: Date()
+    privKey:   Array.from(privKey),
+    timestamp: 0
   };
   
   sessionStorage.setItem("decryptObj", JSON.stringify(decryptObj));
@@ -53,13 +53,15 @@ async function derivePassword(/* salt, */ password) {
  */
 async function decryptData(iv, encryptedData, password) {
   const key = await derivePassword(password);
+  var uint8iv = new Uint8Array(Array.from(atob(iv)).map(d => d.charCodeAt(0)));
   // now that we have the key, we can decrypt!
   const decryptData = await crypto.subtle.decrypt(
-    {name: "AES-GCM", iv: Array.from(iv.map(d => d.charCodeAt(0)))},
+    {name: "AES-GCM", iv: uint8iv},
     key,
-    Array.from(encryptedData.map(d => d.charCodeAt(0)))
+    new Uint8Array(Array.from(atob(encryptedData)).map(d => d.charCodeAt(0)))
   );
-  sessionStorage.setItem("decryptObj", decryptData);
+  var decryptString = String.fromCodePoint(...Array.from(new Uint8Array(decryptData)));
+  sessionStorage.setItem("decryptObj", decryptString);
   return 0;
 }
 
@@ -78,7 +80,7 @@ function getPrivKey() {
   if (privKey == null) {
     return errEncryptedStore.NoKey;
   }
-  return privKey;  
+  return new Uint8Array(privKey);  
 }
 
 /* getKey gets the key object given a provided channel. This can return either

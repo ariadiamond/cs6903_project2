@@ -20,22 +20,18 @@ async function setup() {
  * on success, and false on failure.
  */
 async function registerFunc(pubKey) {
-  console.log("register func");
   try { // catch promise if it is rejected
     var resp = await fetch("/create", {
       method: "POST",
-      body: JSON.stringify({"publicKey": pubKey.toString()})
+      body: JSON.stringify({"publicKey": btoa(String.fromCharCode(...Array.from(pubKey)))})
     });
   } catch(e) {
-    console.log("error")
     console.log(e);
     return false;
   }
-  console.log("fetched register"); 
   switch (resp.status) {
     case 200:
       var json = await resp.json(); // parse json object
-      console.log(json);
       if (!Validate.ValidateId(json.id) ||              // check the server is
           !Validate.ValidateToken(json.sessionToken)) { // not giving bad data
         return false;
@@ -45,7 +41,6 @@ async function registerFunc(pubKey) {
       localStorage.setItem("token", json.sessionToken);
       return true;
     default: // 400, 500
-      console.log("default");
       return false;
   }
 }

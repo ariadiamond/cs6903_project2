@@ -94,7 +94,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		rows.Close()
 	}
-	
+
 	if _, err := Jarvis.Exec(`INSERT INTO Users(id, pubKey) VALUES ($1, $2)`, newID, data.PublicKey);
 		err != nil {
 		// What do we do? just fail?
