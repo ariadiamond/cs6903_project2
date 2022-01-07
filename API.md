@@ -8,12 +8,20 @@ Step 1:
 |Endpoint|/create|
 |:-------|------:|
 |Method  |POST   |
-|Data    |`publicKey` string|
+|Data    |`publicKey` string base 64|
 
 |Response Code|Data|
 |:------------|---:|
-|200          |<ul><li>`id` 4 hex string</li><li>`sessionToken` 32 hex string</li></ul>|
+|200          |<ul><li>`id` 4 hex string</li><li>`sessionToken` 24 base64 string</li></ul>|
 |400, 500     |None|
+
+
+## Store Encrypted File
+
+|Endpoint|/store|
+|:-------|-----:|
+|Method  |POST  |
+|Data    |<ul><li>`sessionToken` 24 base64 string</li><li>`iv` 16 base64 string</li><li>`encryptedFile` base64 string</li></ul>|
 
 ---
 ## Authentication
@@ -27,7 +35,7 @@ Step 1:
 
 |Reponse Code |Data|
 |:------------|---:|
-|200          |<ul><li>`nonce` 32 hex string</li><li>`encryptedFile` base64 string</li></ul>|
+|200          |<ul><li>`nonce` 24 base64 string</li><li>`iv` 16 base64 string</li><li>`encryptedFile` base64 string</li></ul>|
 |400, 404, 500|None|
 
 **Step 2:**
@@ -35,11 +43,11 @@ Step 1:
 |Endpoint|/auth/2  |
 |:-------|--------:|
 |Method  |POST     |
-|Data    |<ul><li>`id` 4 hex string</li><li>`nonce` 32 hex string</li><li>`signature` 78 base64 string</li></ul>|
+|Data    |<ul><li>`id` 4 hex string</li><li>`nonce` 24 base64 string</li><li>`signature` 78 base64 string. Signature is of nonce converted to bytes</li></ul>|
 
 |Response Code     |Data|
 |:-----------------|---:|
-|200               |`sessionToken` 32 hex string|
+|200               |`sessionToken` 24 base64 string|
 |400, 403, 404, 500|None|
 
 ## Get a public Key
@@ -50,7 +58,7 @@ Step 1:
 
 |Response Code|Data           |
 |:------------|--------------:|
-|200          |`pubKey` string|
+|200          |`pubKey` 24 base64 string|
 |400,404,500  |None           |
 
 ---
@@ -59,7 +67,7 @@ Step 1:
 |Endpoint|/newChat|
 |:-------|-------:|
 |Method  |POST    |
-|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`members` list of 4 hex string</li><li>`g` bigInt</li><li>`p` bigInt</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
+|Data    |<ul><li>`sessionToken` 24 base64 string</li><li>`members` list of 4 hex string</li><li>`g` bigInt</li><li>`p` bigInt</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
 
 |Response Code|Data         |
 |:------------|------------:|
@@ -71,7 +79,7 @@ Step 1:
 |Endpoint|/acceptChat|
 |:-------|----------:|
 |Method  |POST       |
-|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`channel` int</li><li>`accept` boolean</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
+|Data    |<ul><li>`sessionToken` 24 base64 string</li><li>`channel` int</li><li>`accept` boolean</li><li>`exponents` list of string</li><li>`signature` 78 base64 string</li></ul>|
 
 |Response Code     |Data|
 |:-----------------|---:|
@@ -83,7 +91,7 @@ Step 1:
 |Endpoint|/findChat|
 |:-------|--------:|
 |Method  |POST     |
-|Data    |`sessionToken` 32 hex string|
+|Data    |`sessionToken` 24 base64 string|
 
 |Response Code|Data|
 |:------------|---:|
@@ -96,7 +104,7 @@ Step 1:
 |Endpoint|/send|
 |:-------|----:|
 |Method  |POST |
-|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`channel` int</li><li>`message` string</li></ul>|
+|Data    |<ul><li>`sessionToken` 24 base64 string</li><li>`channel` int</li><li>`message` string</li></ul>|
 
 |Response Code     |Data|
 |:-----------------|---:|
@@ -108,7 +116,7 @@ Step 1:
 |Endpoint|/retrieve|
 |:-------|--------:|
 |Method  |POST     |
-|Data    |<ul><li>`sessionToken` 32 hex string</li><li>`userTimestamp` timestamp</li></ul>|
+|Data    |<ul><li>`sessionToken` 24 base64 string</li><li>`userTimestamp` int</li></ul>|
 
 |Response Code|Data|
 |:------------|---:|
