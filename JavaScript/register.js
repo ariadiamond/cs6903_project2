@@ -11,7 +11,6 @@ async function setup() {
   const privKey = ed25519.utils.randomPrivateKey();
   const pubKey  = await ed25519.getPublicKey(privKey);
   encryptedStore.init(privKey);
-  localStorage.setItem("pbKey", JSON.stringify(pubKey));
   return pubKey;
 }
 

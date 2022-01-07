@@ -17,6 +17,31 @@ function init(privKey) {
   sessionStorage.setItem("decryptObj", JSON.stringify(decryptObj));
 }
 
+
+async function derivePassword(/* salt, */ password) {
+  const forDeriveKey = await crypto.subtle.importKey(
+    "raw",          // raw key material
+    // uint8 array of bytes of password
+    new Uint8Array(Array.from(password).map(d => d.charCodeAt(0))),
+    "PBKDF2",       // use PBKDF2 to derive an AES key for this
+    false,          // do not allow exports
+    ["deriveKey"]); // this will be used for derivation
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2", 
+      hash: "SHA-256",
+      salt: new Uint8Array(16), // TODO store on server so it can be non-zero
+      iterations: 1 << 20 // big number
+    },
+    forDeriveKey,
+    {name: "AES-GCM", length: 256},
+    false,
+    ["encrypt", "decrypt"]
+  );
+  sessionStorage.setItem("pbKey", JSON.stringify(key));
+  return key;
+}
+
 /* decryptData takes the encrypted data stored on the server (or locally) and
  * decrypts it to make it available through the encryptedStore API. it takes a:
  *   - 96 bit iv, which is stored on the server with the encrypted data
@@ -27,24 +52,7 @@ function init(privKey) {
  *   - password, entered by the user and used to decrypt the data
  */
 async function decryptData(iv, encryptedData, password) {
-  const forDeriveKey = await crypto.subtle.importKey(
-    "raw",          // raw key material
-    Array.from(password.map(d => d.charCodeAt(0))), // array of password bits
-    "PBKDF2",       // use PBKDF2 to derive an AES key for this
-    false,          // do not allow exports
-    ["deriveKey"]); // this will be used for derivation 
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2", 
-      hash: "SHA-256", 
-      iterations: 1 << 20 // big number
-    },
-    forDeriveKey,
-    {name: "AES-GCM", length: 256},
-    false,
-    ["encrypt", "decrypt"]
-  );
-  sessionStorage.setItem("pbKey", JSON.stringify(key));
+  const key = await derivePassword(password);
   // now that we have the key, we can decrypt!
   const decryptData = await crypto.subtle.decrypt(
     {name: "AES-GCM", iv: Array.from(iv.map(d => d.charCodeAt(0)))},
@@ -142,27 +150,7 @@ function setTimestamp(timestamp) {
  * chosen).
  */
 async function storeWithServer(password) {
-  console.log(Array.from(password).map(d => d.charCodeAt(0)));
-  const forDeriveKey = await crypto.subtle.importKey(
-    "raw",          // raw key material
-    new Uint8Array(Array.from(password).map(d => d.charCodeAt(0))), // bytes
-    "PBKDF2",       // use PBKDF2 to derive an AES key for this
-    false,          // do not allow exports
-    ["deriveKey"]); // this will be used for derivation
-  console.log("derive key");
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2", 
-      hash: "SHA-256",
-      salt: new Uint8Array(16), // TODO store on server so it can be non-zero
-      iterations: 1 << 20 // big number
-    },
-    forDeriveKey,
-    {name: "AES-GCM", length: 256},
-    false,
-    ["encrypt", "decrypt"]
-  );
-  sessionStorage.setItem("pbKey", JSON.stringify(key));
+  const key = await derivePassword(password);
   const decryptString = sessionStorage.getItem("decryptObj");
   const token      = localStorage.getItem("token");
   if (decryptString == null || token == null) {
@@ -174,18 +162,19 @@ async function storeWithServer(password) {
   
   // create a new iv for each time we store the data on the server
   var iv = crypto.getRandomValues(new Uint8Array(96 >> 3));
-  const encData = await crypto.subtle.encrypt(
+  const encData = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv: iv},
     key,
     dataToEnc
-  );
+  ));
+  
   try {
     var response = await fetch("/store", {
       method: "POST",
       body: JSON.stringify({
         sessionToken: token,
-        iv: btoa(String.fromCharCode(...Array.from(iv))), // convert to base64∂
-        encryptedData: JSON.stringify(encData)})
+        iv: btoa(String.fromCharCode(...Array.from(iv))), // convert to base64
+        encryptedData: btoa(String.fromCharCode(...Array.from(encData)))})
     });
   } catch(e) {
     return errEncryptedStore.FetchFail;
