@@ -5,14 +5,15 @@
 
 ## Overview
 
-Project repository for CS-GY 6903 project 2. We are building a secure system allowing for
-anonymous messaging called Cryptik. This is type 1 of project 2.
+Project repository for CS-GY 6903 project 2. We are building a secure system allowing for anonymous messaging called Cryptik. This is type 1 of project 2.
+
+For an in-depth analysis of the security of the project, look at [Design.pdf](Design.pdf) in this repository, or see the [overleaf document](https://www.overleaf.com/read/xztpfjbjchbn) which includes the source for building the pdf.
 
 ## Building and Running
 
-This requires docker and a x509 certificate key pair. Docker can be found at [this website](https://www.docker.com) and creating a TLS key pair using openSSL can be found from [this IBM guide](https://www.ibm.com/docs/en/api-connect/5.0.x?topic=profiles-generating-self-signed-certificate-using-openssl).
+This requires docker and a x509 certificate key pair. Docker can be found at [the official website](https://www.docker.com) and creating a TLS key pair using openSSL can be found from [this IBM guide](https://www.ibm.com/docs/en/api-connect/5.0.x?topic=profiles-generating-self-signed-certificate-using-openssl).
 
-Place a certificate in `ServerSrc `with the names `cert.pem` and `key.pem` and another (or the same certificate) in `ServerSrc/Postgres/` `server.crt` and `server.key`.
+Place a certificate in `ServerSrc` with the names `cert.pem` and `key.pem` and another (or the same certificate) in `ServerSrc/Postgres/` `server.crt` and `server.key`.
 
 Once these are installed run the following commands:
 
