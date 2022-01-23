@@ -26,14 +26,21 @@
       "indent": ["error", 2, { "SwitchCase": 1 }],
       "linebreak-style": ["error", "unix"],
       "camelcase": "warn",
+      "complexity": "error",
       "max-len": ["error", {
         "code": 80, 
         "tabWidth": 2, 
         "ignoreUrls": true, 
         "ignoreStrings": true
       }],
-      "prefer-const": "warn",
       "no-extra-parens": "error",
+      "func-names": "error",
+      "no-shadow": "error",
+      "max-lines-per-function": ["error", {
+        "max": 30,
+        "skipBlankLines": true,
+        "skipComments": true
+      }],
       "no-warning-comments": ["error", {"terms": ["TODO", "FIXME"]}] 
     }
   }

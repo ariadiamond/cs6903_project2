@@ -1,4 +1,5 @@
 // library implementing Diffie Hellman operations on big ints
+// n following many numbers is to covnert them to big ints
 
 const PRIME_BITS = 3072;
 const G_BITS     = 256;
@@ -18,7 +19,7 @@ function testPrime(bi) {
     var d = bi - r2;
     var xData = crypto.getRandomValues(new Uint32Array(X_BITS));
     var str = "0x";
-    xData.forEach(d => str = str + d.toString(16));
+    xData.forEach(hex => str = str + hex.toString(16));
     var y = modExp(BigInt(str), d, bi);
     if (y == 1n || y == bi - 1n) {
       continue;
@@ -53,9 +54,12 @@ function getBigPrime() {
 }
 
 function getG() {
+  // get a bunch of randomness
   var rand = crypto.getRandomValues(new Uint32Array(G_BITS >> 5));
+  // convert to hex string
   var str = "0x";
   rand.forEach(d => str = str + d.toString(16));
+  // convert to big int from hex string
   var bi = BigInt(str);
   return bi;
 }

@@ -8,8 +8,14 @@ const errEncryptedStore = {
   ServerErr:          7
 };
 
+/* init takes the private key for the ed25519 pair and stores it with a base
+ * timestamp of 0 as the start of the decryptObject. It should only be needed
+ * when creating a new account, as it is retrieved from the server on login.
+ */
 function init(privKey) {
   var decryptObj = {
+    // convert from Uint8Array to normal array
+    // We do this to properly encode with JSON.
     privKey:   Array.from(privKey),
     timestamp: 0
   };
@@ -18,6 +24,7 @@ function init(privKey) {
 }
 
 
+// helper function
 async function derivePassword(/* salt, */ password) {
   const forDeriveKey = await crypto.subtle.importKey(
     "raw",          // raw key material
@@ -44,8 +51,9 @@ async function derivePassword(/* salt, */ password) {
 
 /* decryptData takes the encrypted data stored on the server (or locally) and
  * decrypts it to make it available through the encryptedStore API. it takes a:
- *   - 96 bit iv, which is stored on the server with the encrypted data
- *   - 16 byte salt, which is stored with the iv on the server and used to
+ *   - 96 bit iv, which is stored on the server with the encrypted data. It is
+ *     16 bytes stored in base64, which we convert to a Uint8Array.
+ *   - 16 byte salt, which will be stored with the iv on the server and used to
  *     prevent rainbow table attacks
  *   - encrypted data, which was previously encrypted by a client and stored on
  *     on the server
@@ -53,14 +61,20 @@ async function derivePassword(/* salt, */ password) {
  */
 async function decryptData(iv, encryptedData, password) {
   const key = await derivePassword(password);
+  // convert base64 iv to the byte representation needed for decryption
   var uint8iv = new Uint8Array(Array.from(atob(iv)).map(d => d.charCodeAt(0)));
   // now that we have the key, we can decrypt!
-  const decryptData = await crypto.subtle.decrypt(
+  const decryptedData = await crypto.subtle.decrypt(
     {name: "AES-GCM", iv: uint8iv},
     key,
+    // convert base64 data back to byte representation (like iv)
     new Uint8Array(Array.from(atob(encryptedData)).map(d => d.charCodeAt(0)))
   );
-  var decryptString = String.fromCodePoint(...Array.from(new Uint8Array(decryptData)));
+  // convert byte array of UTF-16 characters back to the JSONified decryptObj
+  // after this, we can just JSON.parse and access the object like a normal JS
+  // object
+  var decryptString = String.fromCodePoint(...Array.from(
+    new Uint8Array(decryptedData)));
   sessionStorage.setItem("decryptObj", decryptString);
   return 0;
 }
@@ -80,6 +94,7 @@ function getPrivKey() {
   if (privKey == null) {
     return errEncryptedStore.NoKey;
   }
+  // convert private key back to byte representation from normal Array
   return new Uint8Array(privKey);  
 }
 
@@ -152,18 +167,22 @@ function setTimestamp(timestamp) {
  * chosen).
  */
 async function storeWithServer(password) {
-  const key = await derivePassword(password);
+  // get necessary data we need for encryption and storing with server
+  const key           = await derivePassword(password);
   const decryptString = sessionStorage.getItem("decryptObj");
-  const token      = localStorage.getItem("token");
+  const token         = localStorage.getItem("token");
   if (decryptString == null || token == null) {
     return errEncryptedStore.MissingData;
   }
   
+  // convert the JSONified normal object to a byte representation
   const dataToEnc = new Uint8Array(Array.from(decryptString)
     .map(d => d.charCodeAt(0)));
   
   // create a new iv for each time we store the data on the server
   var iv = crypto.getRandomValues(new Uint8Array(96 >> 3));
+  // convert resulting encryption to byte representation so we can do things
+  // like convert to a base64 string for storage
   const encData = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv: iv},
     key,
@@ -175,12 +194,14 @@ async function storeWithServer(password) {
       method: "POST",
       body: JSON.stringify({
         sessionToken: token,
-        iv: btoa(String.fromCharCode(...Array.from(iv))), // convert to base64
+        // convert the next two arguments to base64 from byte representation
+        iv: btoa(String.fromCharCode(...Array.from(iv))),
         encryptedData: btoa(String.fromCharCode(...Array.from(encData)))})
     });
   } catch(e) {
     return errEncryptedStore.FetchFail;
   }
+  // return response based on how the server acted
   switch(response.status) {
     case 200:
       return 0;

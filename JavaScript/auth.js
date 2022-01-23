@@ -10,7 +10,8 @@ const errAuth = {
   Auth2:      5,
   InvalToken: 6,
   WrongSig:   7,
-  NoNonce:    8
+  NoNonce:    8,
+  WrongPass:  9
 };
 
 async function authFunc(password) {
@@ -19,7 +20,7 @@ async function authFunc(password) {
     return errAuth.Id;
   }
   
-  /* auth step 1 */
+  /* auth step 1 - get nonce and decrypt our keys */
   try {
     var resp = await fetch("/auth/1", {
       method: "POST",
@@ -28,16 +29,20 @@ async function authFunc(password) {
   } catch(e) {
     return errAuth.Auth1;
   }
+  
   switch (resp.status) {
     case 200:
       var json  = await resp.json();
       var nonce = json.nonce;
-      await encryptedStore.decryptData(
+      // take encrypted private keys and try to decrypt them
+      // after this, we should have a valid decryptObj in our sessionStorage
+      // that holds our private ed25519 key for signing in auth2
+      var decrypt = await encryptedStore.decryptData(
         json.iv,
         json.encryptedFile,
         password);
-      if (!Validate.ValidateNonce(nonce)) {
-        return errAuth.InvalNonce;
+      if (decrypt != 0) { // something went wrong
+        return errAuth.WrongPass;
       }
       break;
     case 404:
@@ -46,30 +51,41 @@ async function authFunc(password) {
       return errAuth.ServerErr;
   }
   
+  /* Sign nonce for verification */
+  // grab our ed25519 private key
   const privKey = encryptedStore.getPrivKey();
-  console.log("?");
-  var arrNonce = new Uint8Array(Array.from(nonce).map(d => d.charCodeAt(0)));
-  console.log(arrNonce);
+  // convert from base64 to byte representation
+  var arrNonce = new Uint8Array(Array.from(atob(nonce))
+    .map(d => d.charCodeAt(0)));
 
+  // sign byte representation of nonce with byte representation of key
   const signature = await ed25519.sign(arrNonce, privKey);
   console.log(...Array.from(signature));
+  
+  /* auth step 2 - verify with server and get session token*/
   try {
     resp = await fetch("/auth/2", {
       method: "POST",
-      body: JSON.stringify({id: id, nonce: nonce, signature: btoa(String.fromCharCode(...Array.from(signature)))})
+      body: JSON.stringify({
+        id: id,
+        nonce: nonce,
+        // convert signature to base64 string from byte representation
+        signature: btoa(String.fromCharCode(...Array.from(signature)))})
     });
   } catch(e) {
     return errAuth.Auth2;
   }
+  
+  // respond with various error codes based on server response
   switch (resp.status) {
-    case 200:
+    case 200: // valid auth, get session token
       json = await resp.json();
       var token = json.sessionToken;
       if (!Validate.ValidateToken(token)) {
         return errAuth.InvalToken;
       }
       localStorage.setItem("token", token);
-      break;
+      return 0; // :)
     case 403:
       return errAuth.WrongSig;
     case 404:
@@ -85,7 +101,8 @@ function getPK(id) {
       if (response.status != 200) {
         return false;
       }
-      return response.json().pubKey;
+      return new Uint8Array(Array.from(atob(response.json().pubKey))
+        .map(d => d.charCodeAt(0)));
     })
     .catch(false);
 }
