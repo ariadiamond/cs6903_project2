@@ -42,13 +42,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	/* Verify Client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
+		Debug("Hit /create without POST method")
 		return
 	}
 
 	var data createUserData
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-        Error(err.Error())
 		w.WriteHeader(400)
+		Debug("Hit /create but unable to decode JSON: " + err.Error())
 		return
 	}
 
@@ -70,26 +71,29 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	for _, err := rand.Read(newByteID); numRes != 0; _, err = rand.Read(newByteID) {
 		if err != nil { // unable to generate randomness
-			Warn("Unable to generate randomness")
 			w.WriteHeader(500)
+			Debug("Unable to generate randomness for ID: " + err.Error())
 			return
 		}
 		newID = hex.EncodeToString(newByteID)
-		Info(newID)
+		Debug("Created new ID: " + newID)
 		// check if this ID has been used already
 		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Users WHERE id = $1`, newID)
 		if err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to query Jarvis: " + err.Error())
 			return
 		}
 		defer rows.Close()
 
 		if !rows.Next() {
 			w.WriteHeader(500)
+			Debug("Unable to get number of users with ID")
 			return
 		}
 		if rows.Scan(&numRes) != nil {
 			w.WriteHeader(500)
+			Debug("Unable to get number of users with ID")
 			return
 		}
 		rows.Close()
@@ -99,6 +103,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		err != nil {
 		// What do we do? just fail?
 		w.WriteHeader(500)
+		Debug("Unable to insert new user into Jarvis: " + err.Error())
 		return
 	}
 
@@ -106,6 +111,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	sessionToken, err := AddSession(newID)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to generate session token: " + err.Error())
 		return
 	}
 
@@ -115,8 +121,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		SessionToken: sessionToken,
 	}
 
-	if  json.NewEncoder(w).Encode(response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 
@@ -129,39 +136,46 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
  * intruder).
  */
 func StoreSecret(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/storeSecret", "")
 	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
+		Debug("Hit /store without POST method")
 		return
 	}
 
 	var serverData storeSecretData
-	if json.NewDecoder(r.Body).Decode(&serverData) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /store but unable to decode JSON: " + err.Error())
 		return
 	}
 
 	// check if SessionToken is valid
     if !ValidateToken(serverData.SessionToken) {
         w.WriteHeader(400)
+        Debug("Hit /store but provided invalid session token")
         return
     }
 
 	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
+		Debug("Hit /store but session token does not exist")
 		return
 	}
+	Endpoint("/store", id)
 
 	_, err := Jarvis.Exec(`UPDATE Users SET iv = $1 WHERE id = $2;`, serverData.Iv, id)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to update Jarvis: " + err.Error())
 		return
 	}
 
 	// io write encryptedData to file
-	 if ioutil.WriteFile("UserKeys/" + id, []byte(serverData.EncryptedData), 0600) != nil {
+	 if err = ioutil.WriteFile("UserKeys/" + id, []byte(serverData.EncryptedData), 0600);
+	 	err != nil {
 		 w.WriteHeader(500)
+		 Debug("Unable to write " + id + "'s secret file: " + err.Error())
 		 return
 	 }
 

@@ -11,7 +11,7 @@ const (
 //	YELLOW  = "\x1b[33m"
 	BLUE    = "\x1b[34m"
 	MAGENTA = "\x1b[35m"
-//	CYAN    = "\x1b[36m"
+	CYAN    = "\x1b[36m"
 	UNSET   = "\x1b[0m"
 )
 
@@ -63,5 +63,11 @@ func Endpoint(endpoint string, data string) {
 	if (*Verbosity > 3) {
 		fmt.Fprintf(LogFile, "[%sEND%s]:  %s%s%s || %s%s%s\n", GREEN, UNSET, GREEN, endpoint, UNSET,
 			GREEN, data, UNSET)
+	}
+}
+
+func Debug(data string) {
+	if (*Verbosity > 4) {
+		fmt.Fprintf(LogFile, "[%sDBG%s]:  %s%s%s\n", CYAN, UNSET, CYAN, data, UNSET)
 	}
 }

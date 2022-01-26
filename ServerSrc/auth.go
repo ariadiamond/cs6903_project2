@@ -39,11 +39,11 @@ type getPublicKeyResponse struct {
  * maintained server-side during communication).
  */
 func AuthStep1(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/auth/1", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
+		Debug("Hit auth/1 without POST method")
 		return
 	}
 
@@ -51,20 +51,26 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	var clientData authStep1Data
 	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit auth/1, but unable to decode JSON")
 		return
 	}
 
 	// check ID is valid
-    if !ValidateId(clientData.Id) {
-        w.WriteHeader(400)
-        return
-    }
+	if !ValidateId(clientData.Id) {
+		w.WriteHeader(400)
+		Debug("Hit auth/1, but has invalid ID")
+		return
+	}
+	
+	// We have enough data to print endpoint logging
+	Endpoint("/auth/1", clientData.Id)
 
 	/* We did our checks, we can now try to do things */
 	// Open user secret file
 	encryptedData, err := ioutil.ReadFile("UserKeys/" + clientData.Id)
 	if err != nil {
 		w.WriteHeader(404)
+		Debug("Unable to open " + clientData.Id + "'s secret file: " + err.Error())
 		return
 	}
 
@@ -72,22 +78,27 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 	nonce, err := AddNonce(clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to generate nonce: " + err.Error())
 		return
 	}
 	
+	// get IV for user's secret file
 	rows, err := Jarvis.Query(`SELECT iv FROM Users WHERE id = $1`, clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to query Jarvis: " + err.Error())
 		return
 	}
 	defer rows.Close()
 	if !rows.Next() {
 		w.WriteHeader(500)
+		Debug("Unable to get iv from Jarvis")
 		return
 	}
 	var iv string
-	if rows.Scan(&iv) != nil {
+	if err = rows.Scan(&iv); err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to get iv from Jarvis: " + err.Error())
 		return
 	}
 
@@ -98,9 +109,10 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
 		File:  string(encryptedData),
 	}
 
-	if json.NewEncoder(w).Encode(&response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(&response); err != nil { // implicit 200
 		w.WriteHeader(500)
-		return
+		Debug("Error encoding and sending JSON response: " + err.Error())
+		// implicit return
 	}
 }
 
@@ -113,49 +125,62 @@ func AuthStep1(w http.ResponseWriter, r *http.Request) {
  * SELECT hash FROM Users WHERE userID = cryptikID;
  */
 func AuthStep2(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/auth/2", "")
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
+		Debug("Hit auth/2 without POST method")
 		return
 	}
 
 	var clientData authStep2Data
 	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
 		w.WriteHeader(400)
+		Debug("Hit auth/2, but unable to decode JSON")
 		return
 	}
 
+	if !ValidateId(clientData.Id) {
+		w.WriteHeader(400)
+		Debug("Hit auth/2, but provided invalid ID")
+		return
+	}
+	Endpoint("auth/2", clientData.Id)
+
+	/* After validating input, lets validate their signature */
+	// get public key from Jarvis
 	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = $1`, clientData.Id)
 	if err != nil {
-        Error(err.Error())
 		w.WriteHeader(404)
+		Debug("Unable to query for public key: " + err.Error())
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)
+		Debug("Unable to get public key from Jarvis")
 		return
 	}
 
 	pubKeyB64 := make([]byte, ed25519.PublicKeySize << 1)
-	if rows.Scan(&pubKeyB64) != nil {
-        Error("Scan error")
+	if err = rows.Scan(&pubKeyB64); err != nil {
 		w.WriteHeader(404)
+		Debug("Unable to get public key from Jarvis: " + err.Error())
 		return
 	}
-    Info(string(pubKeyB64))
+	
+	Info(string(pubKeyB64))
 	pubKey := make([]byte, ed25519.PublicKeySize)
-    _, err = base64.StdEncoding.Decode(pubKey, pubKeyB64[:44])
-    if err != nil {
-    	Error(err.Error())
-    	w.WriteHeader(500)
-    	return
-    }
+	// convert base64 public key (stored method) to binary
+	_, err = base64.StdEncoding.Decode(pubKey, pubKeyB64[:44])
+	if err != nil {
+		w.WriteHeader(500)
+		Debug("Unable to decode base64: " + err.Error())
+		return
+	}
 	nonce, exists := GetNonce(clientData.Id)
 	if !exists {
-        Error("No Nonce")
 		w.WriteHeader(404)
+		Debug("Unable to retrieve nonce for " + clientData.Id)
 		return
 	}
 
@@ -163,12 +188,14 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 	Info(string(clientData.Signature))
 	if !ed25519.Verify(pubKey, []byte(nonce), clientData.Signature) {
 		w.WriteHeader(403)
+		Debug("Invalid signature for authentication")
 		return
 	}
 
 	sessionToken, err := AddSession(clientData.Id)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to generate session token: " + err.Error())
 		return
 	}
 
@@ -176,8 +203,9 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		SessionToken: sessionToken,
 	}
 
-	if json.NewEncoder(w).Encode(&response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(&response); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 }
@@ -192,35 +220,41 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 	// Check for the correct HTTP method
 	if r.Method != http.MethodGet {
 		w.WriteHeader(400)
+		Debug("Hit getpk without GET method")
 		return
 	}
 
 	id := r.URL.Path[len("/getpk/"):]
 	if !ValidateId(id) {
 		w.WriteHeader(400)
+		Debug("Invalid Id for getpk")
 		return
 	}
 
 	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, id)
 	if err != nil {
 		w.WriteHeader(404)
+		Debug("Query error for getting public key")
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)
+		Debug("Unable to get public key")
 		return
 	}
 
 	var responseData getPublicKeyResponse
-	if rows.Scan(&responseData.PubKey) != nil {
+	if err = rows.Scan(&responseData.PubKey); err != nil {
 		w.WriteHeader(404)
+		Debug("Unable to get public key: " + err.Error())
 		return
 	}
 
-	if json.NewEncoder(w).Encode(responseData) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(responseData); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 }

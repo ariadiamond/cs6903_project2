@@ -20,7 +20,7 @@ var (
 	port     = flag.Int("port", 4443, "Port to run HTTP Server on")
 	insecure = flag.Bool("i", false, "Run over HTTP instead of HTTPS. This also requires the " +
 		"DEBUG variable to be set")
-    Verbosity = flag.Int("v", 1, "Verbosity level 0-4")
+    Verbosity = flag.Int("v", 1, "Verbosity level 0-5")
 	logFile  = flag.String("l", "os.Stdout", "Log file to write to")
 	errFile  = flag.String("e", "os.Stderr", "Error file to write to")
 	
@@ -44,7 +44,7 @@ func fileServer(w http.ResponseWriter, r *http.Request) {
     Endpoint("/", r.URL.Path)
 	data, err := ioutil.ReadFile("." + r.URL.Path)
 	if err != nil {
-		Error(err.Error())
+		Warn(err.Error())
 		w.WriteHeader(404)
 		return
 	}
@@ -85,6 +85,7 @@ func main() {
 	connectToDB()
 	// Create a server variable so we can do clean shutdowns
 	srv := http.Server{ Addr: ":" + strconv.Itoa(*port) }
+	// TODO add clean shutdowns
 
 	// Register Handlers (using default serve mux)
 	// register.go

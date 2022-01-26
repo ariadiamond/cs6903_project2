@@ -73,33 +73,38 @@ var (
  
  */
 func NewChat(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/newChat", "")
 	/* Check validity */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
+		Debug("Hit /newChat without POST method")
 		return
 	}
 	
 	var clientData newChatData
-	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /newChat but unable to decode JSON: " + err.Error())
 		return
 	}
 	
 	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
+		Debug("Hit /newChat but session token does not exist")
 		return
 	}
+	Endpoint("/newChat", id)
 	
 	for _, val := range(clientData.Members) {
 		if !ValidateId(val) {
 			w.WriteHeader(400)
+			Debug("Invalid ID in chat members")
 			return
 		}
 	}
 	if (id != clientData.Members[0]) || (len(clientData.Members) > MAX_MEMBERS) {
 		w.WriteHeader(400)
+		Debug("Client not in chat or too many members")
 		return
 	}
 	
@@ -115,21 +120,25 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		channelBI, err = rand.Int(rand.Reader, MAX_CHANNEL) {
 		if err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to genereate channel ID: " + err.Error())
 			return
 		}
 		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Channels WHERE channel = ?;`, channelBI)
 		if err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to query Jarvis for channel IDs: " + err.Error())
 			return	
 		}
 		defer rows.Close()
 		
 		if !rows.Next() {
 			w.WriteHeader(500)
+			Debug("Unable to get channel")
 			return
 		}
-		if rows.Scan(&numRes) != nil {
+		if err = rows.Scan(&numRes); err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to get channel: " + err.Error())
 		}
 	}
 	channel := channelBI.Uint64()
@@ -140,6 +149,7 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		clientData.Exps, clientData.Signature)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to insert new channel into Jarvis: " + err.Error())
 		return
 	}
 	// :)
@@ -147,8 +157,9 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		int(channel),
 	}
 	
-	if json.NewEncoder(w).Encode(response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 }
@@ -161,36 +172,41 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
  * leak information.
  */
 func AcceptChat(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/acceptChat", "")
 	/* Validate client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
+		Debug("Hit /acceptChat without POST method")
 		return
 	}
 	
 	var clientData acceptData
-	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /acceptChat but unable to decode JSON: " + err.Error())
 		return
 	}
 	// get an ID from the sessionToken
 	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
+		Debug("Hit /acceptChat but session token does not exist")
 		return
 	}
+	Endpoint("/acceptChat", id)
 	
 	/* get channel information, so we can do a little more validation */
 	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = ?;`, id)
 	if err != nil || !rows.Next() {
 		w.WriteHeader(404)
+		Debug("Unable to query Jarvis for members: " + err.Error())
 		return
 	}
 	defer rows.Close()
 	
 	var memberResponse string
-	if rows.Scan(&memberResponse) != nil {
+	if err = rows.Scan(&memberResponse); err != nil {
 		w.WriteHeader(400)
+		Debug("Unable to get members: " + err.Error())
 		return
 	}
 	
@@ -204,6 +220,7 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 	}
 	if next == "" {
 		w.WriteHeader(403)
+		Debug("Client not in channel")
 		return
 	}
 	
@@ -221,12 +238,14 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 		if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4;`,
 			next, exps, clientData.Signature, clientData.Channel); err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to update exponents in Jarvis: " + err.Error())
 			return
 		}
 	} else { // the client didn't want to joing the chat, so it no longer exists
 		if _, err := Jarvis.Exec(`DELETE FROM Channels WHERE channel = ?;`, clientData.Channel);
 			err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to remove channel from Jarvis: " + err.Error())
 			return
 		}
 	}
@@ -239,28 +258,34 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
  *
  */
 func FindChat(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/findChat", "")
 	/* Validate client input */
 	if r.Method != http.MethodPost {
 		w.WriteHeader(400)
+		Debug("Hit /findChat without POST method")
 		return
 	}
 	
 	var clientData findData
-	if json.NewDecoder(r.Body).Decode(&clientData) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&clientData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /findChat but unable to decode JSON: " + err.Error())
 		return
 	}
 	
 	id, exist := DereferenceToken(clientData.Token)
 	if !exist {
 		w.WriteHeader(403)
+		Debug("Hit /findChat but session token does not exist")
 		return
 	}
+	
+	
+	/* We've validated client input , so now let's do things */
 	rows, err := Jarvis.Query(`SELECT channel, members, g, p, exps, signature FROM Channels WHERE next = ?;`,
 		id)
 	if err != nil {
 		w.WriteHeader(400)
+		Debug("Unable to get chats from Jarvis: " + err.Error())
 		return
 	}
 	defer rows.Close()
@@ -269,6 +294,7 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("[]")) // implicit 200
 		if err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to write empty chat")
 		}
 		return
 	}
@@ -280,13 +306,15 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 		err = rows.Scan(&chat.Channel, &chat.Members, &chat.G, &chat.P, &chat.Exps, &chat.Signature) {
 		if err != nil {
 			w.WriteHeader(500)
+			Debug("Unable to scan for next chat: " + err.Error())
 			return
 		}
 		response = append(response, chat)
 	}
 	
-	if json.NewEncoder(w).Encode(response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 }

@@ -32,11 +32,11 @@ type getMessagesResponse struct {
  * The client needs to send their session cookie along with the request.
  */
 func SendMessage(w http.ResponseWriter, r *http.Request) {
-	Endpoint("/send", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
+		Debug("Hit /send without POST method")
 		return
 	}
 
@@ -44,6 +44,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	var serverData sendMessageData
 	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /send but unable to decode JSON: " + err.Error())
 		return
 	}
 
@@ -51,33 +52,39 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
+		Debug("Hit /send but could not find session token")
 		return
 	}
+	Endpoint("/send", id)
 
  // Query database for active memebers in channel to verify
 	rows, err := Jarvis.Query(`SELECT members FROM channels WHERE channel = ? AND next = NULL;`,
 		serverData.Channel)
 	if err != nil {
 		w.WriteHeader(404)
+		Debug("Unable to query Jarvis: " + err.Error())
 		return
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
 		w.WriteHeader(404)
+		Debug("Unable to get members in channel")
 		return
 	}
 
 	// Checking to verify members with associated ID are present in chat
 	var members string
 
-	if rows.Scan(&members) != nil {
+	if err = rows.Scan(&members); err != nil {
 		w.WriteHeader(404)
+		Debug("Unable to get members in channel: " + err.Error())
 		return
 	}
 
 	if !strings.Contains(members, id) {
 		w.WriteHeader(403)
+		Debug("User not in channel")
 		return
 	}
 
@@ -87,6 +94,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		serverData.Channel, serverData.MessageSent)
 	if err != nil {
 		w.WriteHeader(500)
+		Debug("Unable to insert message into Jarvis: " + err.Error())
 		return
 	}
 
@@ -100,11 +108,11 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
  * The client needs to send their session cookie along with the request.
  */
 func GetMessages(w http.ResponseWriter, r *http.Request) {
-	Endpoint("retrieve", "")
 	/* Start with checks to make sure the client data is valid. */
 	// Check for the correct HTTP method
 	if (r.Method != http.MethodPost) {
 		w.WriteHeader(400)
+		Debug("Hit /retrieve without POST method")
 		return
 	}
 
@@ -112,6 +120,7 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 	var serverData getMessagesData
 	if err := json.NewDecoder(r.Body).Decode(&serverData); err != nil {
 		w.WriteHeader(400)
+		Debug("Hit /retrieve but unable to decode JSON: " + err.Error())
 		return
 	}
 
@@ -119,25 +128,28 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 	id, exist := DereferenceToken(serverData.SessionToken)
 	if !exist {
 		w.WriteHeader(404)
+		Debug("Hit /retrieve but session token does not exist")
 		return
 	}
+	Endpoint("/retrieve", id)
 
 	// Query database for any messages not yet recieved
  	rows, err := Jarvis.Query(`SELECT message FROM messages WHERE channel in (SELECT channel FROM channels WHERE members LIKE $1) AND messageTimestamp > $2;`,
  		id, serverData.UserTimestamp)
  	if err != nil {
  		w.WriteHeader(404)
+ 		Debug("Unable to query Jarvis for messages: " + err.Error())
  		return
  	}
  	defer rows.Close()
  	
  	if !rows.Next() {
  		w.WriteHeader(404)
+ 		Debug("Unable to get messages")
  		return
  	}
 
 	var message string
-
 	var response getMessagesResponse
 
 	// Iterate through returned messages
@@ -145,14 +157,16 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// >:(
 			w.WriteHeader(400)
+			Debug("Unable to go to next message: " + err.Error())
 			return
 		}
 		response.Messages = append(response.Messages, message)
 	}
 
  	// Return messages
-	if json.NewEncoder(w).Encode(response) != nil { // implicit 200
+	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
+		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return
 	}
 }
