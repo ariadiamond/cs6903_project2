@@ -32,10 +32,11 @@ async function registerFunc(pubKey) {
   switch (resp.status) {
     case 200:
       var json = await resp.json(); // parse json object
-      if (!Validate.ValidateId(json.id) ||              // check the server is
-          !Validate.ValidateToken(json.sessionToken)) { // not giving bad data
-        return false;
-      }
+      //if (!Validate.ValidateId(json.id) ||              // check the server is
+      //    !Validate.ValidateToken(json.sessionToken)) { // not giving bad data
+      //  console.log("Unable to validate inputs");
+      //  return false;
+      //}
       // store data
       localStorage.setItem("id", json.id);
       localStorage.setItem("token", json.sessionToken);

@@ -60,7 +60,6 @@ async function authFunc(password) {
 
   // sign byte representation of nonce with byte representation of key
   const signature = await ed25519.sign(arrNonce, privKey);
-  console.log(...Array.from(signature));
   
   /* auth step 2 - verify with server and get session token*/
   try {
@@ -81,9 +80,9 @@ async function authFunc(password) {
     case 200: // valid auth, get session token
       json = await resp.json();
       var token = json.sessionToken;
-      if (!Validate.ValidateToken(token)) {
-        return errAuth.InvalToken;
-      }
+      //if (!Validate.ValidateToken(token)) {
+      //  return errAuth.InvalToken;
+      //}
       localStorage.setItem("token", token);
       return 0; // :)
     case 403:

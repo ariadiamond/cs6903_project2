@@ -168,7 +168,6 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	Info(string(pubKeyB64))
 	pubKey := make([]byte, ed25519.PublicKeySize)
 	// convert base64 public key (stored method) to binary
 	_, err = base64.StdEncoding.Decode(pubKey, pubKeyB64[:44])
@@ -183,10 +182,15 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		Debug("Unable to retrieve nonce for " + clientData.Id)
 		return
 	}
+	
+	// convert nonce from base64 to binary as that is how the client signed it
+	nonceBin, err := base64.StdEncoding.DecodeString(nonce)
+	if err != nil {
+		Debug(err.Error())
+	}
 
-	Info(nonce)
-	Info(string(clientData.Signature))
-	if !ed25519.Verify(pubKey, []byte(nonce), clientData.Signature) {
+	// validate signature to prove user knows private key
+	if !ed25519.Verify(pubKey, nonceBin, clientData.Signature) {
 		w.WriteHeader(403)
 		Debug("Invalid signature for authentication")
 		return
