@@ -29,7 +29,7 @@ type authStep2Response struct {
 }
 
 type getPublicKeyResponse struct {
-	PubKey [ed25519.PublicKeySize]byte `json:"pubKey"`
+	PubKey []byte `json:"pubKey"`
 }
 
 
@@ -143,7 +143,7 @@ func AuthStep2(w http.ResponseWriter, r *http.Request) {
 		Debug("Hit auth/2, but provided invalid ID")
 		return
 	}
-	Endpoint("auth/2", clientData.Id)
+	Endpoint("/auth/2", clientData.Id)
 
 	/* After validating input, lets validate their signature */
 	// get public key from Jarvis
@@ -235,10 +235,10 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = ?;`, id)
+	rows, err := Jarvis.Query(`SELECT pubKey FROM Users WHERE id = $1`, id)
 	if err != nil {
 		w.WriteHeader(404)
-		Debug("Query error for getting public key")
+		Debug("Query error for getting public key: " + err.Error())
 		return
 	}
 	defer rows.Close()
@@ -249,14 +249,24 @@ func GetPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var responseData getPublicKeyResponse
-	if err = rows.Scan(&responseData.PubKey); err != nil {
+	var responseData string
+	if err = rows.Scan(&responseData); err != nil {
 		w.WriteHeader(404)
 		Debug("Unable to get public key: " + err.Error())
 		return
 	}
+	pubKey, err := base64.StdEncoding.DecodeString(responseData[:44])
 
-	if err = json.NewEncoder(w).Encode(responseData); err != nil { // implicit 200
+	if err != nil {
+			w.WriteHeader(500)
+			Debug(err.Error())
+			return
+	}
+	response := getPublicKeyResponse {
+			PubKey: pubKey,
+	}
+
+	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
 		Debug("Unable to encode JSON response: " + err.Error())
 		// implicit return

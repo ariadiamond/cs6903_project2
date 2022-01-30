@@ -144,7 +144,7 @@ function setKey(channel, keyObj) {
   }
   
   decryptObj[channel].key = keyObj;
-  sessionStorage.setItm("decryptObj", JSON.stringify(decryptObj));
+  sessionStorage.setItem("decryptObj", JSON.stringify(decryptObj));
   return 0;
 }
 

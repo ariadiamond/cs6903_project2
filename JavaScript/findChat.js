@@ -2,7 +2,7 @@ import { encryptedStore } from "/JavaScript/encryptedStorage.js";
 import { num } from "/JavaScript/num.js";
 import { auth } from "/JavaScript/auth.js";
 
-import * as ed25519 from "/JavaScript/Libs/noble-ed25519.js";
+import { ed25519 } from "/JavaScript/Libs/noble-ed25519.js";
 
 const errFind = {
   EAuth:     1,
@@ -23,11 +23,14 @@ async function findChatFun() {
   
   // connect to server to get available chats
   try {
+    console.log("pre fetch");
     var response = await fetch("/findChat", {
       method: "POST",
       body: JSON.stringify({sessionToken: token})
     });
+    console.log("post fetch")
   } catch(e) {
+    console.error(e);
     return errFind.FetchFail;
   }
   
@@ -47,21 +50,23 @@ async function findChatFun() {
    *   - create a list of channels that have not yet been accepted
    *   - compute exponents/shared keys for chats we have already accepted
    */
+   console.log(json);
   var acceptList = new Array();
   for (const chan of json) {
     if (!await verify(chan)) {
+      console.log("unable to verify channel", chan.channel);
       continue;
     }
     
     var key = encryptedStore.getKey(chan.channel);
-    if (typeof key === "number") { // we got an "error" ie. it does not exist
-      acceptList.append(chan);        
+    if (typeof key === "number") { // we got an "error" ie. the key does not exist
+      acceptList.push(chan);        
     } else { // we have already accepted
       var preDaddySecret = num.modExp(BigInt(chan.exps[0]), key.x, key.p);
       var newExps = new Array();
       for (var i = 1; i < chan.exps.length; i++) {
-        var elem = num.modExp(BigInt(chan.exps[i]), key.x, key.p).toString();
-        newExps.append(elem);
+        var elem = num.modExp(BigInt(chan.exps[i]), key.x, key.p);
+        newExps.push(elem.toString(16));
       }
       // sign and send updated exponents back to server
       try {
@@ -113,13 +118,17 @@ async function findChatFun() {
       );
       // store key in encryptedStore
       encryptedStore.setKey(chan.channel, key);
-    }
-  }
+    } // end else
+  } // end for (iterate through each channel
+  return acceptList;
 }
 
 async function sign(msg) {
   const privKey = encryptedStore.getPrivKey();
-  const msgHash = await crypto.subtle.digest("SHA-256", msg);
+  const msgHash = await crypto.subtle.digest(
+    "SHA-256",
+    new Uint8Array(Array.from(msg).map(d => d.charCodeAt(0)))
+  );
   const signature = await ed25519.sign(msgHash, privKey);
   // convert signature to string of base64
   return btoa(String.fromCharCode(...Array.from(signature)));
@@ -140,8 +149,9 @@ async function verify(chan) {
   // get the public key of the sender
   var from = chan.members[idx];
   try {
-    var response = await auth.getPK(from);
+    var pubKey = await auth.getPK(from);
   } catch(e) {
+    console.error(e);
     return false;
   }
   
@@ -149,18 +159,19 @@ async function verify(chan) {
   const msg = JSON.stringify({
     from:      from,
     members:   chan.members,
-    g:         chan.g,
-    p:         chan.p,
-    exponents: chan.exponents
+    p:         chan.p.trim(),
+    g:         chan.g.trim(),
+    exponents: chan.exponents.forEach(d => d.trim())
   });
+  console.log(msg);
   const msgHash = await crypto.subtle.digest(
-    "SHA-256", 
+    "SHA-256",
     new Uint8Array(Array.from(msg).map(d => d.charCodeAt(0)))
   );
   // convert signature back to byte representation from base64
   var signature = new Uint8Array(Array.from(atob(chan.signature))
-    .map(d => d.charCodeAt(0))); 
-  return await ed25519.verify(signature, msgHash, response);
+    .map(d => d.charCodeAt(0)));
+  return await ed25519.verify(signature, new Uint8Array(msgHash), pubKey);
 }
 
 export const findChat = {

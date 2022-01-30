@@ -16,6 +16,9 @@ COPY JavaScript/ ./JavaScript
 # Copy in key/cert
 COPY ServerSrc/*.pem  .
 
+# Make directory for encrypted user files
+RUN mkdir UserKeys
+
 # Build our executable 
 RUN go build
 
@@ -23,4 +26,4 @@ RUN go build
 EXPOSE 4443
 
 # Run our server ;3
-CMD ["./Cryptik"]
+CMD ["./Cryptik", "-host", "10.10.0.2"]

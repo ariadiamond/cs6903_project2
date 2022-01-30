@@ -28,7 +28,7 @@ docker build -t pgi ServerSrc/Postgres/
 
 # Run docker containers
 docker run -d --net dockernet --ip 10.10.0.2 pgi
-docker run --net dockernet --ip 10.10.0.4 -p 5432:5432 server
+docker run --net dockernet --ip 10.10.0.4 -p 4443:4443 server
 
 ```
 

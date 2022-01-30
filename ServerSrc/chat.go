@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -12,8 +13,8 @@ import (
 type newChatData struct {
 	Token     string   `json:"sessionToken"`
 	Members   []string `json:"members"`
-	G         big.Int  `json:"g"`
-	P         big.Int  `json:"p"`
+	G         string   `json:"g"`
+	P         string   `json:"p"`
 	Exps      []string `json:"exponents"`
 	Signature string   `json:"signature"`
 }
@@ -37,8 +38,8 @@ type findData struct {
 type findResponse struct {
 	Channel int      `json:"channel"`
 	Members []string `json:"members"`
-	G       big.Int  `json:"g"`
-	P       big.Int  `json:"p"`
+	G       string   `json:"g"`
+	P       string   `json:"p"`
 	Exps    []string `json:"exponents"`
 	Signature string `json:"signature"`
 }
@@ -102,6 +103,8 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	Debug(strconv.Itoa(len(clientData.Members)))
+	Debug(clientData.Members[0])
 	if (id != clientData.Members[0]) || (len(clientData.Members) > MAX_MEMBERS) {
 		w.WriteHeader(400)
 		Debug("Client not in chat or too many members")
@@ -109,21 +112,24 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	/* We have validated input, so let's do things */
+	Debug(strconv.Itoa(len(clientData.Signature)))
 	
 	// Generate a new channel ID
 	newChatMutex.Lock()
 	defer newChatMutex.Unlock()
 	
 	var channelBI *big.Int
+	var err error
 	numRes := 1
-	for channelBI, err := rand.Int(rand.Reader, MAX_CHANNEL); numRes != 0;
+	for channelBI, err = rand.Int(rand.Reader, MAX_CHANNEL); numRes != 0;
 		channelBI, err = rand.Int(rand.Reader, MAX_CHANNEL) {
 		if err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to genereate channel ID: " + err.Error())
 			return
 		}
-		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Channels WHERE channel = ?;`, channelBI)
+		rows, err := Jarvis.Query(`SELECT COUNT(*) FROM Channels WHERE channel = $1`,
+		    channelBI.Int64())
 		if err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to query Jarvis for channel IDs: " + err.Error())
@@ -141,12 +147,13 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 			Debug("Unable to get channel: " + err.Error())
 		}
 	}
-	channel := channelBI.Uint64()
+	channel := channelBI.Int64()
 	
 	// Insert new data
-	_, err := Jarvis.Exec(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7);`, channel,
+	Debug(strconv.Itoa(len(clientData.P)))
+	_, err = Jarvis.Exec(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7)`, channel,
 		strings.Join(clientData.Members, ","), clientData.Members[1], clientData.G, clientData.P,
-		clientData.Exps, clientData.Signature)
+		strings.Join(clientData.Exps, ","), clientData.Signature)
 	if err != nil {
 		w.WriteHeader(500)
 		Debug("Unable to insert new channel into Jarvis: " + err.Error())
@@ -195,7 +202,7 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 	Endpoint("/acceptChat", id)
 	
 	/* get channel information, so we can do a little more validation */
-	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = ?;`, id)
+	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = $1`, id)
 	if err != nil || !rows.Next() {
 		w.WriteHeader(404)
 		Debug("Unable to query Jarvis for members: " + err.Error())
@@ -235,14 +242,14 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 			next = "'" + next + "'"
 		}
 		
-		if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4;`,
+		if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4`,
 			next, exps, clientData.Signature, clientData.Channel); err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to update exponents in Jarvis: " + err.Error())
 			return
 		}
 	} else { // the client didn't want to joing the chat, so it no longer exists
-		if _, err := Jarvis.Exec(`DELETE FROM Channels WHERE channel = ?;`, clientData.Channel);
+		if _, err := Jarvis.Exec(`DELETE FROM Channels WHERE channel = $1`, clientData.Channel);
 			err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to remove channel from Jarvis: " + err.Error())
@@ -278,10 +285,10 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 		Debug("Hit /findChat but session token does not exist")
 		return
 	}
-	
+	Endpoint("/findChat", id)
 	
 	/* We've validated client input , so now let's do things */
-	rows, err := Jarvis.Query(`SELECT channel, members, g, p, exps, signature FROM Channels WHERE next = ?;`,
+	rows, err := Jarvis.Query(`SELECT channel, members, g, p, exps, signature FROM Channels WHERE next = $1`,
 		id)
 	if err != nil {
 		w.WriteHeader(400)
@@ -291,6 +298,7 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	
 	if !rows.Next() { // there are no new chats to act on
+		Debug("Cannot open rows")
 		_, err := w.Write([]byte("[]")) // implicit 200
 		if err != nil {
 			w.WriteHeader(500)
@@ -301,16 +309,28 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	
 	response := make([]findResponse, 0)
 	var chat findResponse
-	for err = rows.Scan(&chat.Channel, &chat.Members, &chat.G, &chat.P, &chat.Exps, &chat.Signature);
-		rows.Next();
-		err = rows.Scan(&chat.Channel, &chat.Members, &chat.G, &chat.P, &chat.Exps, &chat.Signature) {
+	// because SQL is first order, it does not support arrays so we have to convert them here
+	var members string
+	var exps string
+	amt := 0
+	for err = rows.Scan(&chat.Channel, &members, &chat.G, &chat.P, &exps, &chat.Signature);
+		true;
+		err = rows.Scan(&chat.Channel, &members, &chat.G, &chat.P, &exps, &chat.Signature) {
+		amt += 1
 		if err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to scan for next chat: " + err.Error())
 			return
 		}
+		Debug(chat.Signature)
+		chat.Members = strings.Split(members, ",")
+		chat.Exps = strings.Split(exps, ",")
 		response = append(response, chat)
+		if !rows.Next() {
+			break
+		}
 	}
+	Debug("Number of rows: " + strconv.Itoa(amt))
 	
 	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)

@@ -10,8 +10,8 @@ CREATE TABLE Channels (
 	channel   INTEGER      PRIMARY KEY,
 	members   VARCHAR(50)  NOT NULL,
 	next      CHAR(4)      REFERENCES Users(id), -- this can be NULL if the channel is ready
-	g         BIT(2048)    NOT NULL,
-	p         BIT(2048)    NOT NULL,
+	g         CHAR(100)    NOT NULL,
+	p         CHAR(800)    NOT NULL,
 	exps      VARCHAR(2000),
     signature CHAR(128) -- signature size is 64 bytes, but 128 in hex
 );

@@ -94,16 +94,14 @@ async function authFunc(password) {
   }
 }
 
-function getPK(id) {
-  return fetch("/getpk/" + id)
-    .then(response => {
-      if (response.status != 200) {
-        return false;
-      }
-      return new Uint8Array(Array.from(atob(response.json().pubKey))
-        .map(d => d.charCodeAt(0)));
-    })
-    .catch(false);
+async function getPK(id) {
+  var response = await fetch("/getpk/" + id);
+  if (response.status != 200) {
+    return false;
+  }
+  var json = await response.json(); 
+  return new Uint8Array(Array.from(atob(json.pubKey))
+    .map(d => d.charCodeAt(0)));
 }
 
 export const auth = {
