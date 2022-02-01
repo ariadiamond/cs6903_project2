@@ -108,12 +108,12 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		Debug("Client not in chat or too many members")
 		return
 	}
-	
-	/* We have validated input, so let's do things */	
+
+	/* We have validated input, so let's do things */
 	// Generate a new channel ID
 	newChatMutex.Lock()
 	defer newChatMutex.Unlock()
-	
+
 	var channelBI *big.Int
 	var err error
 	numRes := 1
@@ -129,10 +129,10 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to query Jarvis for channel IDs: " + err.Error())
-			return	
+			return
 		}
 		defer rows.Close()
-		
+
 		if !rows.Next() {
 			w.WriteHeader(500)
 			Debug("Unable to get channel")
@@ -144,7 +144,7 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	channel := channelBI.Int64()
-	
+
 	// Insert new data
 	_, err = Jarvis.Exec(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7)`, channel,
 		strings.Join(clientData.Members, ","), clientData.Members[1], clientData.G, clientData.P,
@@ -158,7 +158,7 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	response := newChatResponse {
 		int(channel),
 	}
-	
+
 	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)
 		Debug("Unable to encode JSON response: " + err.Error())
@@ -197,7 +197,7 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 	Endpoint("/acceptChat", id)
 	
 	/* get channel information, so we can do a little more validation */
-	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = $1`, id)
+	rows, err := Jarvis.Query(`SELECT members FROM Channels WHERE channel = $1`, clientData.Channel)
 	if err != nil || !rows.Next() {
 		w.WriteHeader(404)
 		Debug("Unable to query Jarvis for members: " + err.Error())
@@ -233,11 +233,11 @@ func AcceptChat(w http.ResponseWriter, r *http.Request) {
 			next = "NULL"
 			exps = "NULL"
 		} else {
-			exps = "'" + strings.Join(clientData.Exps, ",") + "'"
-			next = "'" + next + "'"
+			exps = strings.Join(clientData.Exps, ",")
+			next = next
 		}
-		
-		if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4`,
+
+        if _, err := Jarvis.Exec(`UPDATE Channels SET next = $1, exps = $2, signature = $3 WHERE channel = $4`,
 			next, exps, clientData.Signature, clientData.Channel); err != nil {
 			w.WriteHeader(500)
 			Debug("Unable to update exponents in Jarvis: " + err.Error())

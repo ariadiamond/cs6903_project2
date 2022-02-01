@@ -3,17 +3,17 @@
 CREATE TABLE Users (
 	id     CHAR(4)  PRIMARY KEY,
 	iv     CHAR(32),
-	pubKey CHAR(128) NOT NULL -- 32 bytes of data in base64
+	pubKey CHAR(48) NOT NULL -- 32 bytes of data in base64 = 44
 );
 
 CREATE TABLE Channels (
 	channel   INTEGER      PRIMARY KEY,
 	members   VARCHAR(50)  NOT NULL,
 	next      CHAR(4)      REFERENCES Users(id), -- this can be NULL if the channel is ready
-	g         CHAR(100)    NOT NULL,
-	p         CHAR(800)    NOT NULL,
+	g         VARCHAR(100) NOT NULL,
+	p         VARCHAR(800) NOT NULL,
 	exps      VARCHAR(2000),
-    signature CHAR(128) -- signature size is 64 bytes, but 128 in hex
+    signature CHAR(90) -- signature size is 64 bytes, 88 in base64
 );
 
 -- Create a sequence to do autoincrement to create a unique key for each message (as required by
@@ -24,5 +24,5 @@ CREATE TABLE Messages (
 	channel   INTEGER   NOT NULL    REFERENCES Channels(channel),
 	iv        CHAR(16),
 	message   VARCHAR(2048) NOT NULL,
-	signature CHAR(128)
+	signature CHAR(90)
 );

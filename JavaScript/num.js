@@ -5,6 +5,7 @@ const PRIME_BITS = 3072;
 const G_BITS     = 256;
 const X_BITS     = 256;
 const ITER       = 100;
+const RADIX = 16;
 
 // from slide 19 of lecture 3
 // 2^-ITER probability of an incorrect result
@@ -92,9 +93,32 @@ function modExp(base, exponent, modulus) {
   }
 }
 
+function parseString(str) {
+  var prefix = "";
+  switch (RADIX) {
+    case 2:
+      prefix = "0b";
+      break;
+    case 8:
+      prefix = "0";
+      break;
+    case 10:
+      break;
+    case 16:
+      prefix = "0x";
+      break;
+    default:
+      return "Help!!";
+  }
+  return BigInt(prefix + str);
+}
+
 export const num = {
   getP:   getBigPrime,
   getG:   getG,
   getX:   getX,
-  modExp: modExp
+  modExp: modExp,
+  // helpers for serialization of big ints
+  RADIX:    RADIX,
+  parseStr: parseString
 };

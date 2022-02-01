@@ -56,14 +56,24 @@ async function findChatFun() {
     }
     
     var key = encryptedStore.getKey(chan.channel);
-    if (typeof key === "number") { // we got an "error" ie. the key does not exist
+    if (typeof key === "number") { // we got an "error": the key does not exist
       acceptList.set(chan.channel, chan);        
     } else { // we have already accepted
-      var preDaddySecret = num.modExp(BigInt(chan.exponents[0]), key.x, key.p);
+      // based on the order of acceptance, we are guaranteed to have the 0th
+      // exponent be the one we want
+      var preDaddySecret = num.modExp(
+        num.parseStr(chan.exponents[0]),
+        num.parseStr(key.x),
+        num.parseStr(key.p)
+      );
       var newExps = new Array();
       for (var i = 1; i < chan.exps.length; i++) {
-        var elem = num.modExp(BigInt(chan.exps[i]), key.x, key.p);
-        newExps.push(elem.toString(16));
+        var elem = num.modExp(
+          num.parseStr(chan.exps[i]),
+          num.parseStr(key.x),
+          num.parseStr(key.p)
+        );
+        newExps.push(elem.toString(num.RADIX));
       }
       // sign and send updated exponents back to server
       try {
@@ -74,7 +84,8 @@ async function findChatFun() {
           p:         chan.p,
           exponents: newExps
         }));
-        response = fetch("/acceptChat", {
+        // we initialized response with the previous fetch call
+        response = await fetch("/acceptChat", {
           method: "POST",
           body: JSON.stringify({
             sessionToken: token,
@@ -124,10 +135,12 @@ async function sign(msg) {
   const privKey = encryptedStore.getPrivKey();
   const msgHash = await crypto.subtle.digest(
     "SHA-256",
+    // convert from string to raw bytes
     new Uint8Array(Array.from(msg).map(d => d.charCodeAt(0)))
   );
-  const signature = await ed25519.sign(msgHash, privKey);
-  // convert signature to string of base64
+  // convert ArrayBuffer (from digest) to raw bytes
+  const signature = await ed25519.sign(new Uint8Array(msgHash), privKey);
+  // convert signature (raw bytes) to string of base64
   return btoa(String.fromCharCode(...Array.from(signature)));
 }
 
@@ -165,7 +178,7 @@ async function verify(chan) {
     "SHA-256",
     new Uint8Array(Array.from(msg).map(d => d.charCodeAt(0)))
   );
-  // convert signature back to byte representation from base64
+  // convert signature back to byte representation from base64 string
   var signature = new Uint8Array(Array.from(atob(chan.signature))
     .map(d => d.charCodeAt(0)));
   return await ed25519.verify(signature, new Uint8Array(msgHash), pubKey);
