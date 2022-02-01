@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"math/big"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -103,17 +102,14 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	Debug(strconv.Itoa(len(clientData.Members)))
-	Debug(clientData.Members[0])
+
 	if (id != clientData.Members[0]) || (len(clientData.Members) > MAX_MEMBERS) {
 		w.WriteHeader(400)
 		Debug("Client not in chat or too many members")
 		return
 	}
 	
-	/* We have validated input, so let's do things */
-	Debug(strconv.Itoa(len(clientData.Signature)))
-	
+	/* We have validated input, so let's do things */	
 	// Generate a new channel ID
 	newChatMutex.Lock()
 	defer newChatMutex.Unlock()
@@ -150,7 +146,6 @@ func NewChat(w http.ResponseWriter, r *http.Request) {
 	channel := channelBI.Int64()
 	
 	// Insert new data
-	Debug(strconv.Itoa(len(clientData.P)))
 	_, err = Jarvis.Exec(`INSERT INTO Channels VALUES ($1, $2, $3, $4, $5, $6, $7)`, channel,
 		strings.Join(clientData.Members, ","), clientData.Members[1], clientData.G, clientData.P,
 		strings.Join(clientData.Exps, ","), clientData.Signature)
@@ -298,7 +293,6 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	
 	if !rows.Next() { // there are no new chats to act on
-		Debug("Cannot open rows")
 		_, err := w.Write([]byte("[]")) // implicit 200
 		if err != nil {
 			w.WriteHeader(500)
@@ -330,7 +324,6 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	Debug("Number of rows: " + strconv.Itoa(amt))
 	
 	if err = json.NewEncoder(w).Encode(response); err != nil { // implicit 200
 		w.WriteHeader(500)

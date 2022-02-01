@@ -23,12 +23,10 @@ async function findChatFun() {
   
   // connect to server to get available chats
   try {
-    console.log("pre fetch");
     var response = await fetch("/findChat", {
       method: "POST",
       body: JSON.stringify({sessionToken: token})
     });
-    console.log("post fetch")
   } catch(e) {
     console.error(e);
     return errFind.FetchFail;
@@ -50,8 +48,7 @@ async function findChatFun() {
    *   - create a list of channels that have not yet been accepted
    *   - compute exponents/shared keys for chats we have already accepted
    */
-   console.log(json);
-  var acceptList = new Array();
+  var acceptList = new Map();
   for (const chan of json) {
     if (!await verify(chan)) {
       console.log("unable to verify channel", chan.channel);
@@ -60,9 +57,9 @@ async function findChatFun() {
     
     var key = encryptedStore.getKey(chan.channel);
     if (typeof key === "number") { // we got an "error" ie. the key does not exist
-      acceptList.push(chan);        
+      acceptList.set(chan.channel, chan);        
     } else { // we have already accepted
-      var preDaddySecret = num.modExp(BigInt(chan.exps[0]), key.x, key.p);
+      var preDaddySecret = num.modExp(BigInt(chan.exponents[0]), key.x, key.p);
       var newExps = new Array();
       for (var i = 1; i < chan.exps.length; i++) {
         var elem = num.modExp(BigInt(chan.exps[i]), key.x, key.p);
@@ -161,7 +158,7 @@ async function verify(chan) {
     members:   chan.members,
     p:         chan.p.trim(),
     g:         chan.g.trim(),
-    exponents: chan.exponents.forEach(d => d.trim())
+    exponents: chan.exponents.map(d => d.trim())
   });
   console.log(msg);
   const msgHash = await crypto.subtle.digest(

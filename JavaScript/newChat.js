@@ -30,7 +30,7 @@ async function createChat(members) {
     members: members,
     p: key.p.toString(16),
     g: key.g.toString(16),
-    exponents: exps.forEach(d => d.toString(16))
+    exponents: exps.map(d => d.toString(16))
   })
   const signature = await sign(msg);
   console.log(signature);
@@ -42,7 +42,7 @@ async function createChat(members) {
         members: members,
         g: key.g.toString(16),
         p: key.p.toString(16),
-        exponents: exps.forEach(d => d.toString(16)),
+        exponents: exps.map(d => d.toString(16)),
         signature: signature}) 
     });
   } catch(e) {
@@ -80,14 +80,16 @@ async function acceptChat(channel, accept, chan) {
     var key = {
       g: chan.g,
       p: chan.p,
-      x: num.getX()
+      x: num.getX().toString(16)
     };
     encryptedStore.setKey(channel, key);
     vectorClock.initChannel(channel, chan.members)
     var newExps = new Array();
-    for (const exponent of channel.exponents) {
-      newExps.append(num.modExp(BigInt(exponent), key.x, chan.p).toString());
-    }
+    chan.exponents.forEach(function (exponent) {
+      newExps.append(num.modExp(BigInt("0x" + exponent), BigInt("0x" + key.x), BigInt("0x" + chan.p)).toString(16));
+    });
+    // add our extra exponent
+    newExps.append(num.modExp(BigInt("0x" + chan.g), BigInt("0x" + key.x), BigInt("0x" + chan.p)).toString(16));
 
     const signature = await sign(JSON.stringify({
       from:      localStorage.getItem("id"),
