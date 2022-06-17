@@ -2,8 +2,8 @@
 .DS_Store
 
 # Possible intermediate files (depending on the language)
-*.pyc
 ServerSrc/Cryptik
+node_modules
 
 # Keys and Certificates
 *.pem
