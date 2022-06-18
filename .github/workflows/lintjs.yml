@@ -2,7 +2,7 @@ name: Code Style
 on:
   push:
     paths:
-      - '**.js'
+      - 'FrontendSrc/src/**.js'
 permissions:
   contents: read
 
@@ -13,13 +13,12 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: JavaScript
+        working-directory: FrontendSrc
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
       - run: npm install
-      - run: npx eslint **.js
-      - run: npx eslint -c package.json ../Visual/**.js
+      - run: npx eslint -c .eslint.json src/**/*.js
         
