@@ -10,23 +10,75 @@
     "sourceType": "module"
   },
   "rules": {
-    "indent": ["error", 2, { "SwitchCase": 1 }],
-    "linebreak-style": ["error", "unix"],
+    // disallowed rules
+    "no-constant-binary-expression": "error",
+    "no-duplicate-imports": "error",
+    "no-implicit-globals": "error",
+    "no-lonely-if": "error",
+    "no-magic-numbers": "warn",
+    "no-plusplus": "error",
+    "no-self-compare": "error",
+    "no-unmodified-loop-condition": "error",
+    "no-unreachable-loop": "error",
+    "no-use-before-define": "error",
+    // potential errors
+    "consistent-return": "error",
+    "default-case": "warn",
+    "eqeqeq": "warn",
+    "init-declarations": "error",
+    "no-shadow": "error",
+    "no-unused-expressions": "error",
+    "no-var": "warn",
+    // code style
+    "arrow-body-style": "warn",
     "camelcase": "warn",
-    "complexity": "error",
+    "comma-dangle": "error",
+    "comma-spacing": "warn",
+    "comma-style": "warn",
+    "complexity": "warn",
+    "curly": ["warn", "all"],
+    "default-case-last": "warn",
+    "dot-location": ["error", "property"],
+    "dot-notation": "warn",
+    "func-style": ["warn", "declaration", { "allowArrowFunctions": true }],
+    "id-length": ["warn", { "min": 3, "max": 15, "exceptions": ["e", "id"] }],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "key-spacing": ["warn", { "mode": "minimum", "align": "value" }],
+    "linebreak-style": ["error", "unix"],
     "max-len": ["error", {
       "code": 100, 
       "tabWidth": 2, 
       "ignoreUrls": true, 
       "ignoreStrings": true
     }],
-    "no-extra-parens": "error",
+    "max-params": ["warn", 4],
+    "no-console": "error",
+    "no-else-return": "warn",
+    "no-extra-parens": "warn",
+    "no-multi-assign": "warn",
+    "no-multiple-empty-lines": "warn",
+    "no-tabs": "error",
+    "no-trailing-spaces": "error",
+    "no-warning-comments": ["error", { "terms": ["TODO", "FIXME"] }],
+    "one-var": ["error", "never"],
+    "quotes": "warn",
+    "require-await": "warn",
+    "semi": ["error", "always"],
+    "spaced-comment": "warn",
+    // code complexity
+    "no-return-await": "warn",
+    "no-unneeded-ternary": "warn",
+    "no-useless-rename": "warn",
+    "no-useless-return": "warn",
+    "object-shorthand": "warn",
+    "prefer-const": "warn",
+
+    // extras to be distributed
     "func-names": "error",
-    "no-shadow": "error",
     "max-lines-per-function": ["error", {
       "max": 30,
       "skipBlankLines": true,
       "skipComments": true
-   }],
-   "no-warning-comments": ["error", {"terms": ["TODO", "FIXME"]}] 
- }
+    }]
+  }
+}

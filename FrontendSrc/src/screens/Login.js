@@ -3,16 +3,16 @@ import Form from "../components/Form";
 function Login(props) {
   const fields = [
     {
-      inputId: "cryptikId",
+      inputId:         "cryptikId",
       placeholderText: "Enter Cryptik ID"
     },
     {
-      inputId: "password",
-      isPassword: true,
-      placeholderText: "Enter Passcode"      
+      inputId:         "password",
+      isPassword:      true,
+      placeholderText: "Enter Passcode"
     }
   ];
-  
+
   return (
     <>
       <h3>Login</h3>

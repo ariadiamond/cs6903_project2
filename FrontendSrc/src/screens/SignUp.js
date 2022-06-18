@@ -2,11 +2,11 @@ import Form from "../components/Form";
 
 function SignUp(props) {
   const fields = [{
-    inputId: "password",
-    isPassword: true,
-    placeholderText: "Create a Secure Passcode"      
+    inputId:         "password",
+    isPassword:      true,
+    placeholderText: "Create a Secure Passcode"
   }];
-  
+
   return (
     <>
       <h3>Sign Up</h3>

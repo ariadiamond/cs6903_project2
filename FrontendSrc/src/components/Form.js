@@ -2,7 +2,7 @@ import { TextInput, LongButton } from "./Input";
 
 function Form(props) {
   return (
-    <form 
+    <form
       className={props.formClass}
       onSubmit={e => {e.preventDefault(); props.submitFn();}}
     >
@@ -16,7 +16,7 @@ function Form(props) {
         buttonId="submitButton"
         text={props.buttonText}
       />
-    </form>  
+    </form>
   );
 }
 

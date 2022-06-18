@@ -7,19 +7,19 @@ import { faArrowLeftLong, faPaperPlane } from "@fortawesome/free-solid-svg-icons
 
 const messages = [
   {
-    from: "aria",
+    from:    "aria",
     message: "Hiya bestie"
   },
   {
-    from: "Gabi",
+    from:    "Gabi",
     message: "Hey Girlie"
   },
   {
-    from: "aria",
+    from:    "aria",
     message: "How are you?"
   },
   {
-    from: "Adam",
+    from:    "Adam",
     message: "Hi besties girlbosses"
   }
 ];
@@ -47,7 +47,7 @@ function Channel(props) {
       </div>
       <div className="channel">
         <div className="messages">
-          {messages.map(message => 
+          {messages.map(message =>
             <Message key={message.from + message.message} {...message} id={id} />
           )}
         </div>

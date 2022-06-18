@@ -22,20 +22,20 @@ function MemberList(props) {
 const members = ["aria", "tony", "vant"];
 
 function CreateChannel(props) {
-  
+
   const fields = [
     {
-      inputId: "newMember",
+      inputId:         "newMember",
       placeholderText: "Enter Participant Cryptik ID"
     },
     {
-      inputId: "includedMembers",
-      renderField: () => (
+      inputId:     "includedMembers",
+      renderField: () =>
         <div>
           <LongButton text="Add Member to Channel" />
           <MemberList members={members} />
         </div>
-      )
+
     }
   ];
   return (
