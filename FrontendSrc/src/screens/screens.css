@@ -1,0 +1,113 @@
+.top-right {
+  top: 10px;
+  right: 10px;
+}
+
+.fa {
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+}
+
+.left-padding {
+  margin-left: 15px;
+}
+
+.member-list {
+  margin-top: 30px;
+}
+
+/* Channel */
+
+.title {
+  text-align: left;
+  display: flex;
+  width: 80%;
+  margin-bottom: 1em;
+}
+
+h3 {
+  margin: 0px;
+}
+
+.channel {
+  width: 80%;
+  border-radius: 15px;
+  background-color: white;
+  box-shadow: 0 0 10px hsla(0, 0%, 0%, 0.2);
+  overflow: hidden;
+  display: grid;
+}
+
+.messages {
+  max-height: 100%;
+  overflow-y: scroll;
+}
+
+.message-line.right {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message {
+  margin: 1em;
+  width: max-content;
+  height: max-content;
+  padding: 0.5em;
+}
+
+.message.received {
+  border-radius: 0px 20px 20px 20px;
+  background-color: hsl(220, 20%, 94%);
+  color: #444444;
+}
+
+.message.received .message-from {
+  text-align: left;
+}
+
+.message.sent {
+  position: relative;
+  right: 0px;
+  background-color: #420b2f;
+  border-radius: 20px 0px 20px 20px;
+  justify-content: flex-end;
+}
+
+.message.sent .message-from {
+  text-align: right;
+}
+
+.message-from {
+  margin: 0px;
+  padding-bottom: 5px;
+  font-size: 20px;
+}
+
+.message-text {
+  margin: 0px;
+  font-size: 16px;
+}
+
+.send-message {
+  position: relative;
+  bottom: 0px;
+  padding: 1rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+input[type="text"].draft {
+  margin-top: 0px;
+  margin-right: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  background-color: hsl(220, 20%, 94%);
+  max-width: unset;
+}
+
+.circle-button.send {
+  margin-top: 0px;
+}

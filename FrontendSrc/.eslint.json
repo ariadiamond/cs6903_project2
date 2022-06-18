@@ -1,0 +1,32 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2022":  true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 13,
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "linebreak-style": ["error", "unix"],
+    "camelcase": "warn",
+    "complexity": "error",
+    "max-len": ["error", {
+      "code": 100, 
+      "tabWidth": 2, 
+      "ignoreUrls": true, 
+      "ignoreStrings": true
+    }],
+    "no-extra-parens": "error",
+    "func-names": "error",
+    "no-shadow": "error",
+    "max-lines-per-function": ["error", {
+      "max": 30,
+      "skipBlankLines": true,
+      "skipComments": true
+   }],
+   "no-warning-comments": ["error", {"terms": ["TODO", "FIXME"]}] 
+ }
