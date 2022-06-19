@@ -41,7 +41,7 @@
     "dot-location": ["error", "property"],
     "dot-notation": "warn",
     "func-style": ["warn", "declaration", { "allowArrowFunctions": true }],
-    "id-length": ["warn", { "min": 3, "max": 20, "exceptions": ["e", "id"] }],
+    "id-length": ["warn", { "min": 3, "max": 20, "exceptions": ["e", "id", "iv"] }],
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "key-spacing": ["warn", { "mode": "minimum", "align": "value" }],
     "linebreak-style": ["error", "unix"],

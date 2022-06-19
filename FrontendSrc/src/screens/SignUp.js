@@ -2,6 +2,7 @@ import Form from "../components/Form";
 import Banner from "../components/Banner";
 
 import Register from "../pureJS/Register";
+import StoreWithServer from "../pureJS/StoreWithServer";
 
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ async function registerWithServer(props, setErrorBanner) {
     return;
   }
   props.setLogin(resp);
+  StoreWithServer.storeOnServer(resp.sessionToken, props.store);
   props.setPage("home");
 }
 

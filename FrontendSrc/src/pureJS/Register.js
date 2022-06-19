@@ -19,7 +19,7 @@ async function createKey(EncryptedStore) {
 }
 
 async function register(pubKey) {
-  const fetch = Fetcher.createFetcher("/create", "POST", {publicKey: pubKey});
+  const fetch = Fetcher.createFetcher("/create", {publicKey: pubKey});
   const response = await fetch.catch(() => FETCH_FAIL);
   if (typeof response == "number" || !response.ok) {
     return FETCH_FAIL;
