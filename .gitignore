@@ -4,6 +4,9 @@
 # Possible intermediate files (depending on the language)
 ServerSrc/Cryptik
 node_modules
+build
 
 # Keys and Certificates
 *.pem
+server.key
+server.crt

@@ -41,7 +41,7 @@
     "dot-location": ["error", "property"],
     "dot-notation": "warn",
     "func-style": ["warn", "declaration", { "allowArrowFunctions": true }],
-    "id-length": ["warn", { "min": 3, "max": 15, "exceptions": ["e", "id"] }],
+    "id-length": ["warn", { "min": 3, "max": 20, "exceptions": ["e", "id"] }],
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "key-spacing": ["warn", { "mode": "minimum", "align": "value" }],
     "linebreak-style": ["error", "unix"],
@@ -76,9 +76,11 @@
     // extras to be distributed
     "func-names": "error",
     "max-lines-per-function": ["error", {
-      "max": 30,
+      "max": 40,
       "skipBlankLines": true,
       "skipComments": true
-    }]
+    }],
+    // rules turned off
+    "import/no-anonymous-default-export": "off"
   }
 }

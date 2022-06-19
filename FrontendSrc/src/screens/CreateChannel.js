@@ -12,7 +12,7 @@ function MemberList(props) {
       {props.members.map(member =>
         <div key={member} className="member-item" >
           {member}
-          &nbsp; <FontAwesomeIcon icon={faXmark} className="fa left-padding" />
+          <FontAwesomeIcon icon={faXmark} className="fa left-padding" />
         </div>
       )}
     </div>
@@ -42,12 +42,12 @@ function CreateChannel(props) {
     <>
       <FontAwesomeIcon
         icon={faXmark}
-        className="top-right fa"
+        className="top-left fa"
         onClick={() => props.setPage("home")}
       />
       <h3>
-        <FontAwesomeIcon icon={faUserPlus} />
-        &nbsp; Create Cryptik Channel
+        <FontAwesomeIcon icon={faUserPlus} className="fa-padding" />
+        Create Cryptik Channel
       </h3>
       <Form
         fields={fields}

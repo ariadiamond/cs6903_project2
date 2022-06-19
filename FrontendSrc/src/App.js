@@ -6,6 +6,8 @@ import Home from "./screens/Home";
 import CreateChannel from "./screens/CreateChannel";
 import Channel from "./screens/Channel";
 
+import EncryptedStore from "./pureJS/libs/EncryptedStore";
+
 import './App.css';
 
 import { useState } from "react";
@@ -28,13 +30,15 @@ function changePage(page) {
 }
 
 function App() {
+  const store = new EncryptedStore();
   const [page, setPage] = useState("signUp");
+  const [login, setLogin] = useState({});
   const PageComponent = changePage(page); 
   return (
     <div className="App">
-      <Header setPage={setPage} />
+      <Header setPage={setPage} login={login} logout={() => setLogin({})} />
       <div className="main-content">
-        <PageComponent setPage={setPage} />
+        <PageComponent setPage={setPage} login={login} setLogin={setLogin} store={store} />
       </div>
     </div>
   );

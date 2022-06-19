@@ -5,16 +5,12 @@ FROM golang:1.17.3-alpine
 WORKDIR /docker
 
 # Copy our go files into the container
-COPY ServerSrc/*.go   .
-COPY ServerSrc/go.mod .
-COPY ServerSrc/go.sum .
-
-# Copy in html files to serve up
-COPY Visual/ ./Visual
-COPY JavaScript/ ./JavaScript
+COPY ServerSrc/*.go   ./
+COPY ServerSrc/go.mod ./
+COPY ServerSrc/go.sum ./
 
 # Copy in key/cert
-COPY ServerSrc/*.pem  .
+COPY ServerSrc/*.pem  ./
 
 # Make directory for encrypted user files
 RUN mkdir UserKeys

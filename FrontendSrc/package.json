@@ -1,10 +1,12 @@
 {
   "name": "cryptik-frontend",
   "version": "0.1.0",
+  "proxy": "https://localhost:4443",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
-    "@fortawesome/react-fontawesome": "^0.1.18",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@fortawesome/react-fontawesome": "^0.1.18",
+    "@noble/ed25519": "^1.6.0",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",

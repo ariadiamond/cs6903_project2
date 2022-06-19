@@ -1,6 +1,7 @@
-.top-right {
-  top: 10px;
-  right: 10px;
+.top-left {
+  position: relative;
+  top: -18%;
+  left: -48%;
 }
 
 .fa {
@@ -9,12 +10,18 @@
   height: 20px;
 }
 
-.left-padding {
+.fa-padding {
   margin-left: 15px;
+  margin-right: 15px;
 }
 
 .member-list {
   margin-top: 30px;
+}
+
+.member-item {
+  height: 20px;
+  margin-bottom: 5px;
 }
 
 /* Channel */

@@ -16,6 +16,14 @@
   margin: 0px;
 }
 
+.banner {
+  border: 2px solid #dd2222;
+  background-color: #fe9a9a;
+  padding: 4px;
+  margin: 5px;
+  border-radius: 8px;
+}
+
 .right-group {
   position: absolute;
   right: 20px;
